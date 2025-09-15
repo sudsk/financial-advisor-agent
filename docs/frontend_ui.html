@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Financial Advisor - GKE Hackathon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .user-input {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .user-input h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .input-group textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        
+        .analyze-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .agent-status {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .agent-status h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .agent-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 3px solid #e1e8ed;
+            transition: all 0.3s;
+        }
+        
+        .agent-card.active {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .agent-card.processing {
+            border-color: #ffc107;
+            background: #fff3cd;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .agent-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .agent-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .agent-status-text {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .results {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+        
+        .results h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .recommendation-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .recommendation-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .recommendation-content {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .confidence-score {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .demo-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .demo-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .demo-btn:hover {
+            background: #138496;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Financial Advisor</h1>
+            <p>Multi-Agent Financial Intelligence on Google Kubernetes Engine</p>
+        </div>
+        
+        <div class="main-grid">
+            <div class="user-input">
+                <h3>💬 Ask Your Financial Question</h3>
+                <div class="input-group">
+                    <label for="userId">User ID (Bank of Anthos)</label>
+                    <input type="text" id="userId" value="testuser" placeholder="Enter user ID">
+                </div>
+                <div class="input-group">
+                    <label for="accountId">Account ID</label>
+                    <input type="text" id="accountId" value="1234567890" placeholder="Enter account ID">
+                </div>
+                <div class="input-group">
+                    <label for="query">Your Financial Question</label>
+                    <textarea id="query" placeholder="e.g., Help me save $50,000 for a house down payment in 2 years"></textarea>
+                </div>
+                <button class="analyze-btn" onclick="analyzeFinancialQuery()" id="analyzeBtn">
+                    🔍 Analyze with AI Agents
+                </button>
+            </div>
+            
+            <div class="agent-status">
+                <h3>🔄 Agent Coordination Status</h3>
+                <div class="agents-grid">
+                    <div class="agent-card" id="coordinator-agent">
+                        <div class="agent-icon">🎯</div>
+                        <div class="agent-name">Coordinator</div>
+                        <div class="agent-status-text">Ready</div>
+                    </div>
+                    <div class="agent-card" id="budget-agent">
+                        <div class="agent-icon">💰</div>
+                        <div class="agent-name">Budget Agent</div>
+                        <div class="agent-status-text">Ready</div>
+                    </div>
+                    <div class="agent-card" id="investment-agent">
+                        <div class="agent-icon">📈</div>
+                        <div class="agent-name">Investment Agent</div>
+                        <div class="agent-status-text">Ready</div>
+                    </div>
+                    <div class="agent-card" id="security-agent">
+                        <div class="agent-icon">🛡️</div>
+                        <div class="agent-name">Security Agent</div>
+                        <div class="agent-status-text">Ready</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="loading" id="loadingSection">
+            <div class="spinner"></div>
+            <p>AI agents are collaborating to analyze your financial situation...</p>
+        </div>
+        
+        <div class="results" id="resultsSection" style="display: none;">
+            <h3>📋 Financial Analysis Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🎬 Demo Scenarios</h3>
+            <div class="demo-buttons">
+                <button class="demo-btn" onclick="loadDemoScenario('house')">
+                    🏠 Save for House
+                </button>
+                <button class="demo-btn" onclick="loadDemoScenario('retirement')">
+                    🏖️ Retirement Planning
+                </button>
+                <button class="demo-btn" onclick="loadDemoScenario('debt')">
+                    💳 Debt Optimization
+                </button>
+                <button class="demo-btn" onclick="loadDemoScenario('investment')">
+                    💼 Investment Strategy
+                </button>
+            </div>
+            <p><strong>Architecture:</strong> This demo showcases ADK (Agent Development Kit), MCP (Model Context Protocol) for Bank of Anthos API integration, and A2A (Agent-to-Agent) communication protocols running on Google Kubernetes Engine.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://coordinator-agent.financial-advisor.svc.cluster.local:8080';
+        
+        const demoScenarios = {
+            house: "Help me save $80,000 for a house down payment in 3 years. I currently spend about $4,500 per month.",
+            retirement: "I'm 35 years old and want to retire comfortably at 60. What's my best investment strategy?",
+            debt: "I have $15,000 in credit card debt at 18% interest. How should I pay this off while still saving?",
+            investment: "I have $25,000 to invest and want to balance growth with safety. What do you recommend?"
+        };
+        
+        function loadDemoScenario(scenario) {
+            document.getElementById('query').value = demoScenarios[scenario];
+        }
+        
+        function updateAgentStatus(agentId, status, statusText) {
+            const agent = document.getElementById(agentId);
+            agent.className = `agent-card ${status}`;
+            agent.querySelector('.agent-status-text').textContent = statusText;
+        }
+        
+        async function analyzeFinancialQuery() {
+            const userId = document.getElementById('userId').value;
+            const accountId = document.getElementById('accountId').value;
+            const query = document.getElementById('query').value;
+            
+            if (!userId || !accountId || !query) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            // Reset UI
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('loadingSection').classList.add('active');
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            // Simulate agent coordination process
+            setTimeout(() => updateAgentStatus('coordinator-agent', 'processing', 'Analyzing query...'), 500);
+            setTimeout(() => updateAgentStatus('budget-agent', 'processing', 'Analyzing spending...'), 1500);
+            setTimeout(() => updateAgentStatus('investment-agent', 'processing', 'Evaluating options...'), 2500);
+            setTimeout(() => updateAgentStatus('security-agent', 'processing', 'Risk assessment...'), 3500);
+            
+            try {
+                // In a real implementation, this would call the coordinator agent
+                const response = await simulateAgentCoordination(userId, accountId, query);
+                
+                // Update agent status to completed
+                setTimeout(() => {
+                    updateAgentStatus('coordinator-agent', 'active', 'Analysis complete');
+                    updateAgentStatus('budget-agent', 'active', 'Recommendations ready');
+                    updateAgentStatus('investment-agent', 'active', 'Strategy prepared');
+                    updateAgentStatus('security-agent', 'active', 'Risk evaluated');
+                }, 4500);
+                
+                // Show results
+                setTimeout(() => {
+                    displayResults(response);
+                    document.getElementById('loadingSection').classList.remove('active');
+                    document.getElementById('resultsSection').style.display = 'block';
+                    document.getElementById('analyzeBtn').disabled = false;
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loadingSection').classList.remove('active');
+                document.getElementById('analyzeBtn').disabled = false;
+                alert('Error analyzing financial query. In a real deployment, this would connect to the coordinator agent.');
+            }
+        }
+        
+        async function simulateAgentCoordination(userId, accountId, query) {
+            // Simulate API call to coordinator agent
+            // In real implementation: const response = await fetch(`${API_BASE_URL}/analyze`, {...});
+            
+            return {
+                summary: "Based on your financial situation and goal, our AI agents recommend a balanced approach combining budget optimization, strategic investments, and risk management.",
+                detailed_plan: [
+                    "Reduce discretionary spending by 15% ($675/month) to increase savings rate",
+                    "Invest 70% in low-cost index funds, 20% in bonds, 10% in high-yield savings",
+                    "Set up automatic transfers to separate savings account for house fund",
+                    "Consider increasing income through side projects or career advancement"
+                ],
+                key_insights: [
+                    "Budget Agent: You can save an additional $675/month through category optimization",
+                    "Investment Agent: Conservative portfolio can achieve 6-8% annual returns",
+                    "Security Agent: Current spending patterns show low financial risk"
+                ],
+                next_actions: [
+                    "Open high-yield savings account for house fund",
+                    "Set up automatic investment plan",
+                    "Review and cancel unused subscriptions",
+                    "Track progress monthly with our monitoring system"
+                ],
+                monitoring: "We'll track your progress monthly and adjust recommendations as needed",
+                metadata: {
+                    agents_used: ["coordinator", "budget", "investment", "security"],
+                    confidence_scores: {
+                        budget: 0.92,
+                        investment: 0.88,
+                        security: 0.95
+                    }
+                }
+            };
+        }
+        
+        function displayResults(results) {
+            const content = document.getElementById('resultsContent');
+            
+            content.innerHTML = `
+                <div class="recommendation-card">
+                    <div class="recommendation-title">💡 Executive Summary</div>
+                    <div class="recommendation-content">${results.summary}</div>
+                </div>
+                
+                <div class="recommendation-card">
+                    <div class="recommendation-title">📋 Action Plan</div>
+                    <div class="recommendation-content">
+                        <ul>
+                            ${results.detailed_plan.map(plan => `<li>${plan}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🔍 Agent Insights</div>
+                    <div class="recommendation-content">
+                        <ul>
+                            ${results.key_insights.map(insight => `<li>${insight}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        ${Object.entries(results.metadata.confidence_scores).map(([agent, score]) => 
+                            `<span class="confidence-score">${agent}: ${Math.round(score * 100)}% confidence</span>`
+                        ).join(' ')}
+                    </div>
+                </div>
+                
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🎯 Next Steps</div>
+                    <div class="recommendation-content">
+                        <ul>
+                            ${results.next_actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDemoScenario('house');
+        });
+    </script>
+</body>
+</html>

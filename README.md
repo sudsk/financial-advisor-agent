@@ -59,21 +59,6 @@ Built for the **Google Kubernetes Engine 10th Anniversary Hackathon** showcasing
 - **Observability**: Integrated monitoring and logging
 - **Horizontal Scaling**: Auto-scaling based on demand
 
-## 🎯 Bank of Anthos API Endpoints 
-
-Based on the frontend code, here are the exact API endpoints our AI agents can integrate with:
-
-## 📋 Complete API Reference
-
-|Service|Endpoint|Purpose|Our Integration|
-|-------|--------|-------|---------------|
-|UserService|POST /loginUser| authentication|✅ User verification|
-|UserService|GET /usersUser| profiles|✅ Budget Agent needs this|
-|BalanceReader|GET /balances|Account balances|✅ Investment Agent needs this|
-|TransactionHistory|GET /transactionsTransaction| history|✅ Budget + Security |
-|AgentsContacts|GET /contactsUser| contacts|✅ Nice-to-have for agents|
-|LedgerWriter|POST /transactions|Create transactions|❌ Read-only for our demo|
-
 ## 🚀 Quick Start
 
 ### Prerequisites

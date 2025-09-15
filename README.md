@@ -1,11 +1,13 @@
 # Financial Advisor Agent
 
-**🎯 Bank of Anthos API Endpoints Revealed**
+## 🎯 Bank of Anthos API Endpoints Revealed
+
 Based on the frontend code, here are the exact API endpoints our AI agents can integrate with:
 
-**📋 Complete API Reference**
+## 📋 Complete API Reference
 
 |Service|Endpoint|Purpose|Our Integration|
+|-------|--------|-------|---------------|
 |UserService|POST /loginUser| authentication|✅ User verification|
 |UserService|GET /usersUser| profiles|✅ Budget Agent needs this|
 |BalanceReader|GET /balancesAccount balances|✅ Investment Agent needs this|

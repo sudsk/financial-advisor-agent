@@ -1,1 +1,6 @@
-
+flask==3.0.0
+httpx==0.25.0
+google-cloud-aiplatform==1.38.0
+vertexai==0.0.1
+asyncio==3.4.3
+python-dateutil==2.8.2

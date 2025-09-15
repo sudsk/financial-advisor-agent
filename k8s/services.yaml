@@ -1,1 +1,78 @@
-
+# k8s/services.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-server
+  namespace: financial-advisor
+spec:
+  selector:
+    app: mcp-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinator-agent
+  namespace: financial-advisor
+spec:
+  selector:
+    app: coordinator-agent
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: budget-agent
+  namespace: financial-advisor
+spec:
+  selector:
+    app: budget-agent
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: investment-agent
+  namespace: financial-advisor
+spec:
+  selector:
+    app: investment-agent
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-agent
+  namespace: financial-advisor
+spec:
+  selector:
+    app: security-agent
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: financial-advisor-ui
+  namespace: financial-advisor
+spec:
+  selector:
+    app: financial-advisor-ui
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer

@@ -6,50 +6,44 @@ import json
 from datetime import datetime, timedelta
 
 class BankOfAnthosClient:
-    def __init__(self, base_url: str = "http://bank-of-anthos-frontend:80"):
-        self.base_url = base_url
-        self.client = httpx.AsyncClient()
+    def __init__(self):
+        self.base_urls = {
+            "userservice": "http://userservice.default.svc.cluster.local:8080",
+            "balancereader": "http://balancereader.default.svc.cluster.local:8080",
+            "transactionhistory": "http://transactionhistory.default.svc.cluster.local:8080",
+            "contacts": "http://contacts.default.svc.cluster.local:8080"
+        }
     
-    async def get_user_profile(self, user_id: str) -> Dict:
-        """Get user profile from userservice"""
-        try:
-            response = await self.client.get(f"{self.base_url}/api/user/{user_id}")
-            return response.json()
-        except Exception as e:
-            return {"error": f"Failed to get user profile: {str(e)}"}
+    async def authenticate_user(self, username: str, password: str):
+        """POST /login - User authentication"""
+        url = f"{self.base_urls['userservice']}/login"
+        payload = {"username": username, "password": password}
+        response = await self.client.post(url, json=payload)
+        return response.json()
     
-    async def get_account_balance(self, account_id: str) -> Dict:
-        """Get account balance from balancereader"""
-        try:
-            response = await self.client.get(f"{self.base_url}/api/balance/{account_id}")
-            return response.json()
-        except Exception as e:
-            return {"error": f"Failed to get balance: {str(e)}"}
+    async def get_user_profile(self, user_id: str):
+        """GET /users/{user_id} - User profile"""
+        url = f"{self.base_urls['userservice']}/users/{user_id}"
+        response = await self.client.get(url)
+        return response.json()
     
-    async def get_transaction_history(self, account_id: str, days: int = 30) -> List[Dict]:
-        """Get transaction history from ledgerwriter"""
-        try:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=days)
-            
-            response = await self.client.get(
-                f"{self.base_url}/api/transactions/{account_id}",
-                params={
-                    "start_date": start_date.isoformat(),
-                    "end_date": end_date.isoformat()
-                }
-            )
-            return response.json()
-        except Exception as e:
-            return [{"error": f"Failed to get transactions: {str(e)}"}]
-    
-    async def get_user_contacts(self, user_id: str) -> List[Dict]:
-        """Get user contacts from contacts service"""
-        try:
-            response = await self.client.get(f"{self.base_url}/api/contacts/{user_id}")
-            return response.json()
-        except Exception as e:
-            return [{"error": f"Failed to get contacts: {str(e)}"}]
+    async def get_account_balance(self, account_id: str):
+        """GET /balances/{account_id} - Account balance"""  
+        url = f"{self.base_urls['balancereader']}/balances/{account_id}"
+        response = await self.client.get(url)
+        return response.json()
+        
+    async def get_transaction_history(self, account_id: str):
+        """GET /transactions/{account_id} - Transaction history"""
+        url = f"{self.base_urls['transactionhistory']}/transactions/{account_id}"
+        response = await self.client.get(url)
+        return response.json()
+        
+    async def get_user_contacts(self, user_id: str):
+        """GET /contacts/{user_id} - User contacts"""
+        url = f"{self.base_urls['contacts']}/contacts/{user_id}"
+        response = await self.client.get(url)
+        return response.json()
     
     async def analyze_spending_patterns(self, account_id: str, days: int = 90) -> Dict:
         """Analyze spending patterns for budget agent"""

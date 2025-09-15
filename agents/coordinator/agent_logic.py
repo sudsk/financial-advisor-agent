@@ -5,7 +5,13 @@ from typing import Dict, List, Any
 from dataclasses import dataclass
 from datetime import datetime
 import httpx
-from google import generativeai as genai
+import vertexai
+from vertexai.generative_models import GenerativeModel
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @dataclass
 class AgentRequest:
@@ -21,20 +27,28 @@ class AgentResponse:
     recommendations: List[str]
 
 class FinancialCoordinator:
-    def __init__(self, gemini_api_key: str, mcp_server_url: str):
+    def __init__(self, project_id: str, region: str, mcp_server_url: str):
+        self.project_id = project_id
+        self.region = region
         self.mcp_server_url = mcp_server_url
-        self.client = httpx.AsyncClient()
+        self.client = None
+        self.model = None
         
-        # Initialize Gemini
-        genai.configure(api_key=gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Initialize Vertex AI
+        vertexai.init(project=project_id, location=region)
+        self.model = GenerativeModel('gemini-pro')
         
         # Agent endpoints (A2A Protocol)
         self.agents = {
-            "budget": "http://budget-agent:8080/analyze",
-            "investment": "http://investment-agent:8080/recommend", 
-            "security": "http://security-agent:8080/assess"
+            "budget": "http://budget-agent.financial-advisor.svc.cluster.local:8080/analyze",
+            "investment": "http://investment-agent.financial-advisor.svc.cluster.local:8080/recommend", 
+            "security": "http://security-agent.financial-advisor.svc.cluster.local:8080/assess"
         }
+    
+    async def initialize(self):
+        """Initialize the coordinator"""
+        self.client = httpx.AsyncClient(timeout=30.0)
+        logger.info("Financial Coordinator initialized")
     
     async def get_user_financial_data(self, user_id: str, account_id: str) -> Dict:
         """Get comprehensive financial data via MCP"""
@@ -43,8 +57,13 @@ class FinancialCoordinator:
                 f"{self.mcp_server_url}/tools/get_financial_snapshot",
                 json={"user_id": user_id, "account_id": account_id}
             )
-            return response.json()
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"MCP server error: {response.status_code}")
+                return {"error": f"MCP server error: {response.status_code}"}
         except Exception as e:
+            logger.error(f"Failed to get financial data: {str(e)}")
             return {"error": f"Failed to get financial data: {str(e)}"}
     
     async def analyze_user_query(self, query: str, user_data: Dict) -> Dict:
@@ -74,6 +93,7 @@ class FinancialCoordinator:
             response = self.model.generate_content(prompt)
             return json.loads(response.text)
         except Exception as e:
+            logger.error(f"Error analyzing user query: {str(e)}")
             # Fallback plan
             return {
                 "intent": "general_financial_advice",

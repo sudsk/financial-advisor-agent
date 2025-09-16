@@ -4,14 +4,26 @@ import asyncio
 from datetime import datetime
 from typing import Dict, List, Any
 import json
-from google import generativeai as genai
+import os
+import vertexai
+from vertexai.generative_models import GenerativeModel
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 class InvestmentAgent:
-    def __init__(self, gemini_api_key: str):
-        genai.configure(api_key=gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+    def __init__(self, project_id: str, region: str):
+        self.project_id = project_id
+        self.region = region
+        
+        # Initialize Vertex AI
+        vertexai.init(project=project_id, location=region)
+        self.model = GenerativeModel('gemini-pro')
+        logger.info(f"Investment Agent initialized with project {project_id} in region {region}")
     
     def calculate_investment_capacity(self, user_data: Dict) -> Dict:
         """Calculate user's investment capacity based on financial data"""
@@ -74,7 +86,7 @@ class InvestmentAgent:
         return allocation
     
     async def generate_investment_recommendations(self, user_data: Dict, context: Dict) -> Dict:
-        """Generate personalized investment recommendations using Gemini"""
+        """Generate personalized investment recommendations using Vertex AI Gemini"""
         
         balance = user_data.get("balance", {})
         spending_analysis = user_data.get("spending_analysis", {})
@@ -100,7 +112,7 @@ class InvestmentAgent:
         {{
             "investment_assessment": "Overall assessment of investment readiness",
             "recommended_strategy": "Primary investment strategy recommendation",
-            "portfolio_allocation": {{"asset_class": percentage}},
+            "portfolio_allocation": {{"asset_class": "percentage"}},
             "specific_recommendations": ["Specific investment products or actions"],
             "risk_considerations": ["Important risks to consider"],
             "timeline_strategy": {{"timeframe": "strategy"}},
@@ -126,17 +138,65 @@ class InvestmentAgent:
             return result
             
         except Exception as e:
+            logger.error(f"Investment analysis failed: {str(e)}")
             return {
                 "error": f"Investment analysis failed: {str(e)}",
                 "confidence": 0.0,
                 "recommendations": ["Unable to provide investment recommendations at this time"]
             }
 
-# Global agent instance  
-investment_agent = InvestmentAgent(gemini_api_key="YOUR_GEMINI_API_KEY")
+# Initialize agent with environment variables
+PROJECT_ID = os.getenv('PROJECT_ID', 'your-project-id')
+REGION = os.getenv('REGION', 'us-central1')
+
+investment_agent = InvestmentAgent(PROJECT_ID, REGION)
 
 @app.route('/recommend', methods=['POST'])
 async def recommend_investments():
     """A2A Protocol endpoint for investment recommendations"""
     try:
         data = request.get_json()
+        
+        user_data = data.get("user_data", {})
+        context = data.get("context", {})
+        requesting_agent = data.get("requesting_agent", "unknown")
+        
+        # Perform investment analysis
+        result = await investment_agent.generate_investment_recommendations(user_data, context)
+        
+        # A2A Protocol response format
+        response = {
+            "agent_type": "investment",
+            "requesting_agent": requesting_agent,
+            "result": result,
+            "confidence": result.get("confidence", 0.8),
+            "recommendations": result.get("specific_recommendations", []),
+            "timestamp": datetime.now().isoformat(),
+            "status": "success"
+        }
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"Investment recommendation error: {str(e)}")
+        return jsonify({
+            "agent_type": "investment",
+            "error": str(e),
+            "confidence": 0.0,
+            "status": "error",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        "agent": "investment",
+        "status": "healthy",
+        "project_id": PROJECT_ID,
+        "region": REGION,
+        "timestamp": datetime.now().isoformat()
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080, debug=False)

@@ -4,15 +4,27 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 import json
-from google import generativeai as genai
+import os
+import vertexai
+from vertexai.generative_models import GenerativeModel
 import statistics
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 class SecurityAgent:
-    def __init__(self, gemini_api_key: str):
-        genai.configure(api_key=gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+    def __init__(self, project_id: str, region: str):
+        self.project_id = project_id
+        self.region = region
+        
+        # Initialize Vertex AI
+        vertexai.init(project=project_id, location=region)
+        self.model = GenerativeModel('gemini-pro')
+        logger.info(f"Security Agent initialized with project {project_id} in region {region}")
     
     def analyze_transaction_patterns(self, transactions: List[Dict]) -> Dict:
         """Analyze transaction patterns for security risks"""
@@ -44,12 +56,15 @@ class SecurityAgent:
             risk_factors.append("High geographical diversity in transactions")
         
         # Check for time-based patterns
-        night_transactions = sum(1 for t in transactions 
-                               if "timestamp" in t and 
-                               datetime.fromisoformat(t["timestamp"]).hour < 6)
-        
-        if night_transactions > len(transactions) * 0.3:
-            risk_factors.append("High number of late-night transactions")
+        try:
+            night_transactions = sum(1 for t in transactions 
+                                   if "timestamp" in t and 
+                                   datetime.fromisoformat(t["timestamp"].replace('Z', '+00:00')).hour < 6)
+            
+            if night_transactions > len(transactions) * 0.3:
+                risk_factors.append("High number of late-night transactions")
+        except Exception as e:
+            logger.warning(f"Error analyzing transaction times: {str(e)}")
         
         # Calculate overall risk score
         risk_score = min(1.0, (len(anomalies) * 0.3 + len(risk_factors) * 0.2))
@@ -98,7 +113,7 @@ class SecurityAgent:
         }
     
     async def generate_security_assessment(self, user_data: Dict, context: Dict) -> Dict:
-        """Generate comprehensive security assessment using Gemini"""
+        """Generate comprehensive security assessment using Vertex AI Gemini"""
         
         transactions = user_data.get("recent_transactions", [])
         balance = user_data.get("balance", {})
@@ -157,14 +172,18 @@ class SecurityAgent:
             return result
             
         except Exception as e:
+            logger.error(f"Security analysis failed: {str(e)}")
             return {
                 "error": f"Security analysis failed: {str(e)}",
                 "confidence": 0.0,
                 "recommendations": ["Unable to perform security analysis at this time"]
             }
 
-# Global agent instance
-security_agent = SecurityAgent(gemini_api_key="YOUR_GEMINI_API_KEY")
+# Initialize agent with environment variables
+PROJECT_ID = os.getenv('PROJECT_ID', 'your-project-id')
+REGION = os.getenv('REGION', 'us-central1')
+
+security_agent = SecurityAgent(PROJECT_ID, REGION)
 
 @app.route('/assess', methods=['POST'])
 async def assess_security():
@@ -193,6 +212,7 @@ async def assess_security():
         return jsonify(response)
         
     except Exception as e:
+        logger.error(f"Security assessment error: {str(e)}")
         return jsonify({
             "agent_type": "security",
             "error": str(e),
@@ -207,6 +227,8 @@ def health_check():
     return jsonify({
         "agent": "security",
         "status": "healthy",
+        "project_id": PROJECT_ID,
+        "region": REGION,
         "timestamp": datetime.now().isoformat()
     })
 

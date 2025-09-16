@@ -1,7 +1,7 @@
 {
   "name": "financial-advisor-ui",
   "version": "1.0.0",
-  "description": "AI Financial Advisor UI for GKE Hackathon",
+  "description": "AI Financial Advisor UI for GKE Hackathon - package.json",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",

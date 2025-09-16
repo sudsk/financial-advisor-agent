@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/build.sh - Build all container images for AI Financial Advisor
+# scripts/build.sh - Fixed build script for AI Financial Advisor
 
 set -e
 
@@ -10,8 +10,14 @@ REGISTRY="$REGION-docker.pkg.dev/$PROJECT_ID/financial-advisor"
 
 echo "🔨 Building AI Financial Advisor container images..."
 echo "Project ID: $PROJECT_ID"
-echo "Region: $REGION"
 echo "Registry: $REGISTRY"
+
+# Check PROJECT_ID
+if [ "$PROJECT_ID" = "your-gcp-project-id" ]; then
+    echo "❌ Please set PROJECT_ID environment variable"
+    echo "   export PROJECT_ID=your-actual-project-id"
+    exit 1
+fi
 
 # Function to build and push an image
 build_and_push() {
@@ -20,6 +26,21 @@ build_and_push() {
     local context_path=$3
     
     echo "🔨 Building $service_name..."
+    
+    # Special handling for UI to generate package-lock.json
+    if [ "$service_name" = "financial-advisor-ui" ]; then
+        echo "📦 Preparing UI dependencies..."
+        cd $context_path
+        
+        # Remove any existing package-lock.json and node_modules
+        rm -f package-lock.json
+        rm -rf node_modules
+        
+        # Generate fresh package-lock.json
+        npm install
+        
+        cd - > /dev/null
+    fi
     
     cd $context_path
     
@@ -34,81 +55,9 @@ build_and_push() {
     cd - > /dev/null
 }
 
-# Ensure we're in the project root
-if [ ! -f "README.md" ] || [ ! -d "agents" ]; then
-    echo "❌ Please run this script from the project root directory"
-    exit 1
-fi
-
-# Check if Docker is running
-if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker and try again."
-    exit 1
-fi
-
-# Check if we're authenticated to Google Cloud
-if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
-    echo "❌ Not authenticated to Google Cloud. Please run 'gcloud auth login'"
-    exit 1
-fi
-
 # Configure Docker for Artifact Registry
 echo "🔐 Configuring Docker authentication..."
 gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
-
-# Create missing Dockerfiles if they don't exist
-echo "📝 Creating missing Dockerfiles..."
-
-# Create Coordinator Agent Dockerfile
-if [ ! -f "agents/coordinator/Dockerfile" ]; then
-    echo "❌ Missing Coordinator Agent Dockerfile. Please create."
-    exit 1    
-fi
-
-# Create Budget Agent Dockerfile
-if [ ! -f "agents/budget-agent/Dockerfile" ]; then
-    echo "❌ Missing Budget Agent Dockerfile. Please create."
-    exit 1    
-fi
-
-# Create Investment Agent Dockerfile
-if [ ! -f "agents/investment-agent/Dockerfile" ]; then
-    echo "❌ Missing Investment Agent Dockerfile. Please create."
-    exit 1    
-fi
-
-# Create Security Agent Dockerfile
-if [ ! -f "agents/security-agent/Dockerfile" ]; then
-    echo "❌ Missing Security Agent Dockerfile. Please create."
-    exit 1    
-fi
-
-# Create UI Dockerfile
-if [ ! -f "ui/Dockerfile" ]; then
-    echo "❌ Missing UI Dockerfile. Please create."
-    exit 1    
-fi
-
-# Create missing requirements.txt files
-if [ ! -f "agents/budget-agent/requirements.txt" ]; then
-    echo "❌ Missing Budget Agent requirements.txt. Please create."
-    exit 1    
-fi
-
-if [ ! -f "agents/security-agent/requirements.txt" ]; then
-    echo "❌ Missing Security Agent requirements.txt. Please create."
-    exit 1    
-fi
-
-if [ ! -f "agents/coordinator/requirements.txt" ]; then
-    echo "❌ Missing Coordinator requirements.txt. Please create."
-    exit 1    
-fi
-
-if [ ! -f "agents/investment-agent/requirements.txt" ]; then
-    echo "❌ Missing Investment Agent requirements.txt. Please create."
-    exit 1    
-fi
 
 # Build all services
 echo "🚀 Starting build process..."
@@ -128,18 +77,10 @@ build_and_push "investment-agent" "Dockerfile" "agents/investment-agent"
 # Build Security Agent
 build_and_push "security-agent" "Dockerfile" "agents/security-agent"
 
-# Build UI
+# Build UI (with special handling)
 build_and_push "financial-advisor-ui" "Dockerfile" "ui"
 
 echo ""
 echo "🎉 All images built and pushed successfully!"
 echo ""
-echo "📋 Built images:"
-echo "  • $REGISTRY/mcp-server:latest"
-echo "  • $REGISTRY/coordinator-agent:latest"
-echo "  • $REGISTRY/budget-agent:latest"
-echo "  • $REGISTRY/investment-agent:latest"
-echo "  • $REGISTRY/security-agent:latest"
-echo "  • $REGISTRY/financial-advisor-ui:latest"
-echo ""
-echo "🚀 Ready for deployment to GKE!"
+echo "🚀 Ready for GKE Hackathon deployment!"

@@ -1,5 +1,4 @@
-
-# ui/Dockerfile - Multi-stage build for React app
+# ui/Dockerfile - Fixed Multi-stage build for React app
 # Stage 1: Build the React application
 FROM node:18-alpine as build
 
@@ -7,7 +6,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci --only=production
+
+# Generate package-lock.json and install dependencies
+RUN npm install
 
 # Copy source code
 COPY . .

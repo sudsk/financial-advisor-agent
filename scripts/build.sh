@@ -85,84 +85,29 @@ fi
 
 # Create UI Dockerfile
 if [ ! -f "ui/Dockerfile" ]; then
-    cat << 'EOF' > ui/Dockerfile
-FROM nginx:alpine
-
-# Copy the HTML files
-COPY index.html /usr/share/nginx/html/
-COPY styles.css /usr/share/nginx/html/ 
-COPY app.js /usr/share/nginx/html/
-
-# Copy custom nginx config if needed
-# COPY nginx.conf /etc/nginx/nginx.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-    echo "✅ Created ui/Dockerfile"
+    echo "❌ Missing UI Dockerfile. Please create."
+    exit 1    
 fi
 
 # Create missing requirements.txt files
 if [ ! -f "agents/budget-agent/requirements.txt" ]; then
-    cat << 'EOF' > agents/budget-agent/requirements.txt
-flask==3.0.0
-google-cloud-aiplatform==1.38.0
-vertexai==1.38.0
-asyncio==3.4.3
-python-dateutil==2.8.2
-gunicorn==21.2.0
-EOF
-    echo "✅ Created agents/budget-agent/requirements.txt"
-fi
-
-if [ ! -f "agents/investment-agent/requirements.txt" ]; then
-    cat << 'EOF' > agents/investment-agent/requirements.txt
-flask==3.0.0
-google-cloud-aiplatform==1.38.0
-vertexai==1.38.0
-asyncio==3.4.3
-python-dateutil==2.8.2
-gunicorn==21.2.0
-EOF
-    echo "✅ Created agents/investment-agent/requirements.txt"
+    echo "❌ Missing Budget Agent requirements.txt. Please create."
+    exit 1    
 fi
 
 if [ ! -f "agents/security-agent/requirements.txt" ]; then
-    cat << 'EOF' > agents/security-agent/requirements.txt
-flask==3.0.0
-google-cloud-aiplatform==1.38.0
-vertexai==1.38.0
-asyncio==3.4.3
-python-dateutil==2.8.2
-gunicorn==21.2.0
-EOF
-    echo "✅ Created agents/security-agent/requirements.txt"
-fi
-
-if [ ! -f "mcp-server/requirements.txt" ]; then
-    cat << 'EOF' > mcp-server/requirements.txt
-fastapi==0.104.1
-uvicorn==0.24.0
-httpx==0.25.0
-pydantic==2.5.0
-python-multipart==0.0.6
-gunicorn==21.2.0
-EOF
-    echo "✅ Created mcp-server/requirements.txt"
+    echo "❌ Missing Security Agent requirements.txt. Please create."
+    exit 1    
 fi
 
 if [ ! -f "agents/coordinator/requirements.txt" ]; then
-    cat << 'EOF' > agents/coordinator/requirements.txt
-flask==3.0.0
-httpx==0.25.0
-google-cloud-aiplatform==1.38.0
-vertexai==1.38.0
-asyncio==3.4.3
-python-dateutil==2.8.2
-gunicorn==21.2.0
-EOF
-    echo "✅ Created agents/coordinator/requirements.txt"
+    echo "❌ Missing Coordinator requirements.txt. Please create."
+    exit 1    
+fi
+
+if [ ! -f "agents/investment-agent/requirements.txt" ]; then
+    echo "❌ Missing Investment Agent requirements.txt. Please create."
+    exit 1    
 fi
 
 # Build all services

@@ -61,130 +61,26 @@ echo "📝 Creating missing Dockerfiles..."
 
 # Create Coordinator Agent Dockerfile
 if [ ! -f "agents/coordinator/Dockerfile" ]; then
-    cat << 'EOF' > agents/coordinator/Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Expose port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-# Run the application
-CMD ["python", "main.py"]
-EOF
-    echo "✅ Created agents/coordinator/Dockerfile"
+    echo "❌ Missing Coordinator Agent Dockerfile. Please create."
+    exit 1    
 fi
 
 # Create Budget Agent Dockerfile
 if [ ! -f "agents/budget-agent/Dockerfile" ]; then
-    cat << 'EOF' > agents/budget-agent/Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Expose port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-# Run the application
-CMD ["python", "main.py"]
-EOF
-    echo "✅ Created agents/budget-agent/Dockerfile"
+    echo "❌ Missing Budget Agent Dockerfile. Please create."
+    exit 1    
 fi
 
 # Create Investment Agent Dockerfile
 if [ ! -f "agents/investment-agent/Dockerfile" ]; then
-    cat << 'EOF' > agents/investment-agent/Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Expose port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-# Run the application
-CMD ["python", "main.py"]
-EOF
-    echo "✅ Created agents/investment-agent/Dockerfile"
+    echo "❌ Missing Investment Agent Dockerfile. Please create."
+    exit 1    
 fi
 
 # Create Security Agent Dockerfile
 if [ ! -f "agents/security-agent/Dockerfile" ]; then
-    cat << 'EOF' > agents/security-agent/Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Expose port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-# Run the application
-CMD ["python", "main.py"]
-EOF
-    echo "✅ Created agents/security-agent/Dockerfile"
+    echo "❌ Missing Security Agent Dockerfile. Please create."
+    exit 1    
 fi
 
 # Create UI Dockerfile

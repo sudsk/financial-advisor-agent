@@ -4,10 +4,11 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Generate package-lock.json and install dependencies
+# Install ALL dependencies (including devDependencies) for build
+# This ensures react-scripts is available
 RUN npm install
 
 # Copy source code

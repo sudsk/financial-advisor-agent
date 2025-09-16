@@ -1,14 +1,13 @@
-# ui/Dockerfile - Fixed Multi-stage build for React app
-# Stage 1: Build the React application
+# ui/Dockerfile - Simplified approach
 FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including devDependencies) for build
-# This ensures react-scripts is available
+# Use npm install instead of npm ci for more flexibility
+# This installs both dependencies and devDependencies
 RUN npm install
 
 # Copy source code
@@ -35,7 +34,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/ || exit 1
+  CMD curl -f http://localhost:3000/health || exit 1
 
 # Start nginx
 ENTRYPOINT ["/docker-entrypoint.sh"]

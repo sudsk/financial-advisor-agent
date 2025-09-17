@@ -1,61 +1,66 @@
-# agents/budget-agent/server.py - Full ADK Budget Agent Server with A2A Protocol
+# agents/budget-agent/server.py - Following Official ADK Pattern
+
 import os
 import json
 from datetime import datetime
+
 import google.auth
 from fastapi import FastAPI, HTTPException, Header
 from google.adk.cli.fast_api import get_fast_api_app
 from google.cloud import logging as google_cloud_logging
 
-# Import the budget agent
-from .agent import root_agent as budget_agent
-
-# Set up Google Cloud
+# Initialize Google Cloud following official pattern
 _, project_id = google.auth.default()
 logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
 
-# Environment setup
+# Environment setup (following Google's pattern)
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1") 
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-# CORS configuration for cross-pod communication
-allow_origins = [
-    "http://localhost:3000",
-    "http://coordinator-agent.financial-advisor.svc.cluster.local:8080",
-    "http://financial-advisor-ui.financial-advisor.svc.cluster.local:80",
-    "*"  # Allow all for demo purposes
-]
+# CORS configuration for hackathon demo
+allow_origins = (
+    os.getenv("ALLOW_ORIGINS", "").split(",") if os.getenv("ALLOW_ORIGINS") else [
+        "http://localhost:3000",
+        "http://coordinator-agent.financial-advisor.svc.cluster.local:8080",
+        "http://financial-advisor-ui.financial-advisor.svc.cluster.local:80",
+        "*"  # Allow all for demo
+    ]
+)
 
-# Agent directory for ADK
+# GCS bucket for logs (following Google's pattern)
+bucket_name = f"gs://{project_id}-financial-advisor-budget-logs"
+
+# Agent directory
 AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Create ADK FastAPI app with automatic agent endpoint generation
+# In-memory session configuration (following Google's pattern)
+session_service_uri = None
+
+# Create ADK FastAPI app following official pattern
 app: FastAPI = get_fast_api_app(
     agents_dir=AGENT_DIR,
     web=True,
+    artifact_service_uri=bucket_name,
     allow_origins=allow_origins,
-    session_service_uri=None  # In-memory sessions for demo
+    session_service_uri=session_service_uri,
 )
 
-# Update app metadata
-app.title = "Budget Agent with Full ADK + A2A Protocol"
-app.description = "Comprehensive budget analysis agent with ADK sub-agents and A2A protocol support"
+# Update app metadata (following Google's pattern)
+app.title = "budget-agent-adk"
+app.description = "ADK-powered budget analysis agent for GKE Hackathon - Bank of Anthos integration"
 
 @app.get("/health")
 async def health_check():
-    """Kubernetes health check endpoint"""
+    """Kubernetes health check endpoint following ADK pattern"""
     return {
         "status": "healthy",
         "agent": "budget_agent_full_adk",
-        "model": budget_agent.model,
-        "sub_agents": len(budget_agent.sub_agents) if budget_agent.sub_agents else 0,
-        "sub_agent_names": [agent.name for agent in (budget_agent.sub_agents or [])],
-        "tools": [tool.__name__ for tool in (budget_agent.tools or [])],
-        "a2a_protocol": "enabled",
+        "service": "financial-advisor-budget-agent",
+        "adk_enabled": True,
         "project_id": project_id,
-        "adk_enabled": True
+        "timestamp": datetime.now().isoformat()
     }
 
 @app.post("/a2a/process")
@@ -66,7 +71,7 @@ async def process_a2a_message(
 ):
     """
     A2A Protocol endpoint for inter-agent communication
-    Handles A2A messages from coordinator with budget analysis requests
+    Following the hackathon A2A protocol specification
     """
     try:
         logger.info(f"💰 BUDGET AGENT: Received A2A message from {message.get('sender_id')}")
@@ -93,10 +98,10 @@ async def process_a2a_message(
         message_type = message.get("message_type")
         payload = message.get("payload", {})
         
-        # Route message to appropriate ADK sub-agent tools
+        # Route message to appropriate ADK tools (following the pattern)
+        from agent import analyze_spending_categories, calculate_savings_opportunities, assess_emergency_fund
+        
         if message_type == "analyze_spending":
-            # Use spending analyzer sub-agent tool
-            from .agent import analyze_spending_categories
             financial_data = payload.get("financial_data", {})
             spending_data = {
                 "categories": financial_data.get("spending_analysis", {}).get("categories", {}),
@@ -106,34 +111,34 @@ async def process_a2a_message(
             result = analyze_spending_categories(json.dumps(spending_data))
             
         elif message_type == "create_savings_plan":
-            # Use savings strategist sub-agent tool
-            from .agent import calculate_savings_opportunities
             result = calculate_savings_opportunities(json.dumps(payload))
             
         elif message_type == "assess_emergency_fund":
-            # Use emergency fund advisor sub-agent tool
-            from .agent import assess_emergency_fund
             result = assess_emergency_fund(json.dumps(payload))
             
         else:
-            # Default to comprehensive budget analysis
+            # Default to comprehensive budget analysis using multiple ADK tools
             logger.info(f"💰 BUDGET AGENT: Using comprehensive analysis for message type: {message_type}")
-            from .agent import analyze_spending_categories, calculate_savings_opportunities
             
             financial_data = payload.get("financial_data", {})
+            
+            # Use ADK tools in sequence
             spending_analysis = analyze_spending_categories(json.dumps(financial_data))
             savings_analysis = calculate_savings_opportunities(json.dumps(financial_data))
+            emergency_analysis = assess_emergency_fund(json.dumps(financial_data))
             
-            # Combine results
+            # Combine ADK tool results
             spending_result = json.loads(spending_analysis)
             savings_result = json.loads(savings_analysis)
+            emergency_result = json.loads(emergency_analysis)
             
             combined_result = {
                 "agent_id": "budget_agent_full_adk",
-                "sub_agents_used": ["spending_analyzer", "savings_strategist"],
+                "adk_tools_used": ["analyze_spending_categories", "calculate_savings_opportunities", "assess_emergency_fund"],
                 "spending_analysis": spending_result,
                 "savings_analysis": savings_result,
-                "summary": "Comprehensive budget analysis completed using ADK sub-agents"
+                "emergency_fund_analysis": emergency_result,
+                "summary": "Comprehensive budget analysis completed using ADK tools and sub-agents"
             }
             result = json.dumps(combined_result)
         
@@ -154,15 +159,16 @@ async def process_a2a_message(
             "status": "success" if "error" not in response_data else "error",
             "payload": {
                 "agent_type": "budget_analysis",
-                "sub_agents_coordination": True,
                 "adk_enabled": True,
+                "sub_agents_coordination": True,
                 "analysis_results": response_data,
                 "confidence": response_data.get("confidence", 0.85),
                 "recommendations": response_data.get("recommendations", response_data.get("optimization_opportunities", [])),
                 "processing_metadata": {
-                    "adk_sub_agents": [agent.name for agent in (budget_agent.sub_agents or [])],
-                    "tools_used": [tool.__name__ for tool in (budget_agent.tools or [])],
-                    "processing_time": datetime.now().isoformat()
+                    "adk_framework": "google.adk.agents",
+                    "adk_tools_used": ["analyze_spending_categories", "calculate_savings_opportunities", "assess_emergency_fund"],
+                    "processing_time": datetime.now().isoformat(),
+                    "gke_hackathon": True
                 }
             }
         }
@@ -187,8 +193,7 @@ async def process_a2a_message(
             "payload": {
                 "agent_type": "budget_analysis",
                 "error": f"A2A processing failed: {str(e)}",
-                "adk_enabled": True,
-                "sub_agents_available": len(budget_agent.sub_agents) if budget_agent.sub_agents else 0
+                "adk_enabled": True
             }
         }
 
@@ -213,105 +218,33 @@ async def get_a2a_capabilities():
             "emergency_fund_assessment",
             "budget_plan_creation"
         ],
-        "sub_agents": [
-            {
-                "name": agent.name,
-                "description": agent.description,
-                "tools": [tool.__name__ for tool in (agent.tools or [])]
-            } for agent in (budget_agent.sub_agents or [])
+        "adk_tools": [
+            "analyze_spending_categories",
+            "calculate_savings_opportunities", 
+            "assess_emergency_fund"
         ],
         "endpoints": {
             "a2a_process": "/a2a/process",
             "capabilities": "/a2a/capabilities", 
             "health": "/health",
-            "status": "/status"
+            "feedback": "/feedback"
         }
     }
 
-@app.get("/status")
-async def get_detailed_agent_status():
-    """Get comprehensive agent status for monitoring and debugging"""
-    return {
-        "agent": {
-            "name": budget_agent.name,
-            "description": budget_agent.description,
-            "model": budget_agent.model,
-            "adk_architecture": "full_sub_agent_coordination"
-        },
-        "sub_agents": [
-            {
-                "name": agent.name,
-                "description": agent.description,
-                "model": agent.model,
-                "tools": [tool.__name__ for tool in (agent.tools or [])]
-            } for agent in (budget_agent.sub_agents or [])
-        ],
-        "a2a_protocol": {
-            "enabled": True,
-            "version": "financial-advisor-v1",
-            "supported_messages": [
-                "analyze_spending", 
-                "create_savings_plan",
-                "assess_emergency_fund"
-            ]
-        },
-        "system": {
-            "project_id": project_id,
-            "region": os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
-            "vertex_ai_enabled": os.getenv("GOOGLE_GENAI_USE_VERTEXAI") == "True",
-            "adk_enabled": True
-        },
-        "health": "healthy",
-        "timestamp": datetime.now().isoformat()
-    }
+@app.post("/feedback")
+def collect_feedback(feedback: dict) -> dict[str, str]:
+    """Collect and log feedback following Google's pattern.
 
-# Legacy endpoint for backward compatibility (non-A2A direct calls)
-@app.post("/analyze")
-async def analyze_budget_legacy(request: dict):
-    """Legacy endpoint for direct budget analysis (backward compatibility)"""
-    try:
-        logger.info("💰 BUDGET AGENT: Processing legacy analysis request")
-        
-        user_data = request.get("user_data", {})
-        
-        # Use ADK sub-agents for comprehensive analysis
-        from .agent import analyze_spending_categories, calculate_savings_opportunities
-        
-        spending_result = analyze_spending_categories(json.dumps(user_data))
-        savings_result = calculate_savings_opportunities(json.dumps(user_data))
-        
-        # Parse results
-        spending_data = json.loads(spending_result)
-        savings_data = json.loads(savings_result)
-        
-        # Convert to legacy format for backward compatibility
-        return {
-            "agent_type": "budget",
-            "adk_enabled": True,
-            "sub_agents_used": ["spending_analyzer", "savings_strategist"],
-            "result": {
-                "spending_analysis": spending_data,
-                "savings_opportunities": savings_data.get("savings_strategies", []),
-                "total_savings_potential": savings_data.get("total_monthly_savings_potential", 0)
-            },
-            "recommendations": savings_data.get("savings_strategies", [])[:3],  # Top 3
-            "confidence": 0.90,
-            "status": "success",
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ BUDGET AGENT: Legacy analysis error: {str(e)}")
-        return {
-            "agent_type": "budget",
-            "adk_enabled": True,
-            "error": str(e),
-            "confidence": 0.0,
-            "status": "error",
-            "timestamp": datetime.now().isoformat()
-        }
+    Args:
+        feedback: The feedback data to log
 
-# Main execution for development/testing
+    Returns:
+        Success message
+    """
+    logger.log_struct(feedback, severity="INFO")
+    return {"status": "success"}
+
+# Main execution following Google's pattern
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)

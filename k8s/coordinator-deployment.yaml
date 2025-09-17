@@ -1,4 +1,4 @@
-# k8s/coordinator-deployment.yaml
+# k8s/coordinator-deployment.yaml - Corrected
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,17 +14,17 @@ spec:
       labels:
         app: coordinator-agent
     spec:
+      serviceAccountName: financial-advisor-ksa
       containers:
       - name: coordinator
-        image: gcr.io/PROJECT_ID/coordinator-agent:latest
+        image: REGION-docker.pkg.dev/PROJECT_ID/financial-advisor/coordinator-agent:latest
         ports:
         - containerPort: 8080
         env:
-        - name: GEMINI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: gemini-secret
-              key: api-key
+        - name: PROJECT_ID
+          value: "PROJECT_ID_VALUE"
+        - name: REGION
+          value: "REGION_VALUE"
         - name: MCP_SERVER_URL
           value: "http://mcp-server.financial-advisor.svc.cluster.local:8080"
         resources:

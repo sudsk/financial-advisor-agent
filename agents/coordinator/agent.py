@@ -1,12 +1,13 @@
-# agents/coordinator/agent.py - ADK + A2A for Hackathon Demo
+# agents/coordinator/agent.py - ADK + A2A + MCP for Hackathon Demo
+
 import os
 import json
 import asyncio
+import uuid
 from typing import Dict, List, Any
 from datetime import datetime
 import httpx
 import logging
-import uuid
 
 # Google ADK imports
 from google.adk.agents import Agent
@@ -18,7 +19,7 @@ from vertexai.generative_models import GenerativeModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Google Cloud
+# Initialize Google Cloud following ADK pattern
 _, project_id = google.auth.default()
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")

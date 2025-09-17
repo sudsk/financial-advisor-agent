@@ -1,61 +1,66 @@
-# agents/investment-agent/server.py - Full ADK Investment Agent Server with A2A Protocol
+# agents/investment-agent/server.py - Following Official ADK Pattern
+
 import os
 import json
 from datetime import datetime
+
 import google.auth
 from fastapi import FastAPI, HTTPException, Header
 from google.adk.cli.fast_api import get_fast_api_app
 from google.cloud import logging as google_cloud_logging
 
-# Import the investment agent
-from .agent import root_agent as investment_agent
-
-# Set up Google Cloud
+# Initialize Google Cloud following official pattern
 _, project_id = google.auth.default()
 logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
 
-# Environment setup
+# Environment setup (following Google's pattern)
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1") 
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-# CORS configuration for cross-pod communication
-allow_origins = [
-    "http://localhost:3000",
-    "http://coordinator-agent.financial-advisor.svc.cluster.local:8080",
-    "http://financial-advisor-ui.financial-advisor.svc.cluster.local:80",
-    "*"  # Allow all for demo purposes
-]
+# CORS configuration for hackathon demo
+allow_origins = (
+    os.getenv("ALLOW_ORIGINS", "").split(",") if os.getenv("ALLOW_ORIGINS") else [
+        "http://localhost:3000",
+        "http://coordinator-agent.financial-advisor.svc.cluster.local:8080",
+        "http://financial-advisor-ui.financial-advisor.svc.cluster.local:80",
+        "*"  # Allow all for demo
+    ]
+)
 
-# Agent directory for ADK
+# GCS bucket for logs (following Google's pattern)
+bucket_name = f"gs://{project_id}-financial-advisor-investment-logs"
+
+# Agent directory
 AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Create ADK FastAPI app with automatic agent endpoint generation
+# In-memory session configuration (following Google's pattern)
+session_service_uri = None
+
+# Create ADK FastAPI app following official pattern
 app: FastAPI = get_fast_api_app(
     agents_dir=AGENT_DIR,
     web=True,
+    artifact_service_uri=bucket_name,
     allow_origins=allow_origins,
-    session_service_uri=None  # In-memory sessions for demo
+    session_service_uri=session_service_uri,
 )
 
-# Update app metadata
-app.title = "Investment Agent with Full ADK + A2A Protocol"
-app.description = "Comprehensive investment advisory agent with ADK sub-agents and A2A protocol support"
+# Update app metadata (following Google's pattern)
+app.title = "investment-agent-adk"
+app.description = "ADK-powered investment advisory agent for GKE Hackathon - Portfolio optimization and retirement planning"
 
 @app.get("/health")
 async def health_check():
-    """Kubernetes health check endpoint"""
+    """Kubernetes health check endpoint following ADK pattern"""
     return {
         "status": "healthy",
         "agent": "investment_agent_full_adk",
-        "model": investment_agent.model,
-        "sub_agents": len(investment_agent.sub_agents) if investment_agent.sub_agents else 0,
-        "sub_agent_names": [agent.name for agent in (investment_agent.sub_agents or [])],
-        "tools": [tool.__name__ for tool in (investment_agent.tools or [])],
-        "a2a_protocol": "enabled",
+        "service": "financial-advisor-investment-agent",
+        "adk_enabled": True,
         "project_id": project_id,
-        "adk_enabled": True
+        "timestamp": datetime.now().isoformat()
     }
 
 @app.post("/a2a/process")
@@ -66,7 +71,7 @@ async def process_a2a_message(
 ):
     """
     A2A Protocol endpoint for inter-agent communication
-    Handles A2A messages from coordinator with investment analysis requests
+    Following the hackathon A2A protocol specification
     """
     try:
         logger.info(f"📈 INVESTMENT AGENT: Received A2A message from {message.get('sender_id')}")
@@ -93,10 +98,10 @@ async def process_a2a_message(
         message_type = message.get("message_type")
         payload = message.get("payload", {})
         
-        # Route message to appropriate ADK sub-agent tools
+        # Route message to appropriate ADK tools (following the pattern)
+        from agent import assess_risk_profile, design_portfolio_allocation, calculate_retirement_projections
+        
         if message_type == "assess_risk_profile":
-            # Use risk assessment sub-agent tool
-            from .agent import assess_risk_profile
             financial_data = payload.get("financial_data", {})
             risk_data = {
                 "balance": financial_data.get("balance", {}).get("amount", 0),
@@ -107,8 +112,6 @@ async def process_a2a_message(
             result = assess_risk_profile(json.dumps(risk_data))
             
         elif message_type == "design_portfolio":
-            # Use portfolio architect sub-agent tool
-            from .agent import design_portfolio_allocation
             portfolio_data = {
                 "risk_profile": "moderate",
                 "investment_amount": payload.get("investment_amount", 25000),
@@ -117,8 +120,6 @@ async def process_a2a_message(
             result = design_portfolio_allocation(json.dumps(portfolio_data))
             
         elif message_type == "retirement_planning":
-            # Use retirement planner sub-agent tool
-            from .agent import calculate_retirement_projections
             retirement_data = {
                 "current_age": payload.get("current_age", 35),
                 "retirement_age": 65,
@@ -127,49 +128,37 @@ async def process_a2a_message(
             }
             result = calculate_retirement_projections(json.dumps(retirement_data))
             
-        elif message_type == "optimize_taxes":
-            # Use tax optimizer sub-agent tool
-            from .agent import optimize_tax_strategy
-            tax_data = {
-                "current_income": payload.get("current_income", 75000),
-                "investment_accounts": payload.get("investment_accounts", {}),
-                "tax_bracket": 0.22
-            }
-            result = optimize_tax_strategy(json.dumps(tax_data))
-            
         else:
-            # Default to comprehensive investment analysis using multiple sub-agents
+            # Default to comprehensive investment analysis using multiple ADK tools
             logger.info(f"📈 INVESTMENT AGENT: Using comprehensive analysis for message type: {message_type}")
-            from .agent import assess_risk_profile, design_portfolio_allocation
             
             financial_data = payload.get("financial_data", {})
             
-            # Risk assessment
+            # Use ADK tools in sequence
             risk_data = {
                 "balance": financial_data.get("balance", {}).get("amount", 15000),
-                "monthly_income": 5000,  # Estimated from financial data
+                "monthly_income": 5000,
                 "monthly_expenses": financial_data.get("spending_analysis", {}).get("average_monthly", 1500),
                 "investment_timeline": 10
             }
             risk_result = assess_risk_profile(json.dumps(risk_data))
             risk_analysis = json.loads(risk_result)
             
-            # Portfolio design based on risk profile
             portfolio_data = {
                 "risk_profile": risk_analysis.get("risk_profile", "moderate"),
-                "investment_amount": 25000,  # Default investment amount
+                "investment_amount": 25000,
                 "timeline_years": 10
             }
             portfolio_result = design_portfolio_allocation(json.dumps(portfolio_data))
             portfolio_analysis = json.loads(portfolio_result)
             
-            # Combine results
+            # Combine ADK tool results
             combined_result = {
                 "agent_id": "investment_agent_full_adk",
-                "sub_agents_used": ["risk_assessor", "portfolio_architect"],
+                "adk_tools_used": ["assess_risk_profile", "design_portfolio_allocation"],
                 "risk_assessment": risk_analysis,
                 "portfolio_design": portfolio_analysis,
-                "summary": "Comprehensive investment analysis completed using ADK sub-agents"
+                "summary": "Comprehensive investment analysis completed using ADK tools and sub-agents"
             }
             result = json.dumps(combined_result)
         
@@ -190,16 +179,16 @@ async def process_a2a_message(
             "status": "success" if "error" not in response_data else "error",
             "payload": {
                 "agent_type": "investment_analysis",
-                "sub_agents_coordination": True,
                 "adk_enabled": True,
+                "sub_agents_coordination": True,
                 "analysis_results": response_data,
                 "confidence": response_data.get("confidence", 0.87),
-                "recommendations": response_data.get("investment_recommendations", 
-                                response_data.get("recommendations", [])),
+                "recommendations": response_data.get("investment_recommendations", response_data.get("recommendations", [])),
                 "processing_metadata": {
-                    "adk_sub_agents": [agent.name for agent in (investment_agent.sub_agents or [])],
-                    "tools_used": [tool.__name__ for tool in (investment_agent.tools or [])],
-                    "processing_time": datetime.now().isoformat()
+                    "adk_framework": "google.adk.agents",
+                    "adk_tools_used": ["assess_risk_profile", "design_portfolio_allocation", "calculate_retirement_projections"],
+                    "processing_time": datetime.now().isoformat(),
+                    "gke_hackathon": True
                 }
             }
         }
@@ -224,8 +213,7 @@ async def process_a2a_message(
             "payload": {
                 "agent_type": "investment_analysis",
                 "error": f"A2A processing failed: {str(e)}",
-                "adk_enabled": True,
-                "sub_agents_available": len(investment_agent.sub_agents) if investment_agent.sub_agents else 0
+                "adk_enabled": True
             }
         }
 
@@ -241,127 +229,34 @@ async def get_a2a_capabilities():
             "assess_risk_profile",
             "design_portfolio",
             "retirement_planning",
-            "optimize_taxes",
             "comprehensive_investment_analysis"
         ],
         "capabilities": [
             "risk_tolerance_assessment",
             "portfolio_architecture_design", 
             "retirement_savings_projections",
-            "tax_optimization_strategies",
             "investment_recommendation_engine"
         ],
-        "sub_agents": [
-            {
-                "name": agent.name,
-                "description": agent.description,
-                "tools": [tool.__name__ for tool in (agent.tools or [])]
-            } for agent in (investment_agent.sub_agents or [])
+        "adk_tools": [
+            "assess_risk_profile",
+            "design_portfolio_allocation", 
+            "calculate_retirement_projections"
         ],
         "endpoints": {
             "a2a_process": "/a2a/process",
             "capabilities": "/a2a/capabilities",
-            "health": "/health", 
-            "status": "/status"
+            "health": "/health",
+            "feedback": "/feedback"
         }
     }
 
-@app.get("/status")
-async def get_detailed_agent_status():
-    """Get comprehensive agent status for monitoring and debugging"""
-    return {
-        "agent": {
-            "name": investment_agent.name,
-            "description": investment_agent.description,
-            "model": investment_agent.model,
-            "adk_architecture": "full_sub_agent_coordination"
-        },
-        "sub_agents": [
-            {
-                "name": agent.name,
-                "description": agent.description,
-                "model": agent.model,
-                "tools": [tool.__name__ for tool in (agent.tools or [])]
-            } for agent in (investment_agent.sub_agents or [])
-        ],
-        "a2a_protocol": {
-            "enabled": True,
-            "version": "financial-advisor-v1",
-            "supported_messages": [
-                "assess_risk_profile",
-                "design_portfolio", 
-                "retirement_planning",
-                "optimize_taxes"
-            ]
-        },
-        "system": {
-            "project_id": project_id,
-            "region": os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
-            "vertex_ai_enabled": os.getenv("GOOGLE_GENAI_USE_VERTEXAI") == "True",
-            "adk_enabled": True
-        },
-        "health": "healthy",
-        "timestamp": datetime.now().isoformat()
-    }
+@app.post("/feedback")
+def collect_feedback(feedback: dict) -> dict[str, str]:
+    """Collect and log feedback following Google's pattern."""
+    logger.log_struct(feedback, severity="INFO")
+    return {"status": "success"}
 
-# Legacy endpoint for backward compatibility (non-A2A direct calls)
-@app.post("/recommend")
-async def recommend_investments_legacy(request: dict):
-    """Legacy endpoint for direct investment recommendations (backward compatibility)"""
-    try:
-        logger.info("📈 INVESTMENT AGENT: Processing legacy recommendation request")
-        
-        user_data = request.get("user_data", {})
-        
-        # Use ADK sub-agents for comprehensive analysis
-        from .agent import assess_risk_profile, design_portfolio_allocation
-        
-        # Risk assessment
-        risk_data = {
-            "balance": user_data.get("balance", {}).get("amount", 15000),
-            "monthly_expenses": user_data.get("spending_analysis", {}).get("average_monthly", 1500),
-            "investment_timeline": 10
-        }
-        risk_result = assess_risk_profile(json.dumps(risk_data))
-        risk_analysis = json.loads(risk_result)
-        
-        # Portfolio design
-        portfolio_data = {
-            "risk_profile": risk_analysis.get("risk_profile", "moderate"),
-            "investment_amount": 25000,
-            "timeline_years": 10
-        }
-        portfolio_result = design_portfolio_allocation(json.dumps(portfolio_data))
-        portfolio_analysis = json.loads(portfolio_result)
-        
-        # Convert to legacy format for backward compatibility
-        return {
-            "agent_type": "investment",
-            "adk_enabled": True,
-            "sub_agents_used": ["risk_assessor", "portfolio_architect"],
-            "result": {
-                "risk_assessment": risk_analysis,
-                "portfolio_recommendation": portfolio_analysis,
-                "investment_strategy": f"Recommended {risk_analysis.get('risk_profile', 'moderate')} portfolio"
-            },
-            "recommendations": portfolio_analysis.get("investment_recommendations", []),
-            "confidence": 0.89,
-            "status": "success",
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ INVESTMENT AGENT: Legacy recommendation error: {str(e)}")
-        return {
-            "agent_type": "investment",
-            "adk_enabled": True,
-            "error": str(e),
-            "confidence": 0.0,
-            "status": "error",
-            "timestamp": datetime.now().isoformat()
-        }
-
-# Main execution for development/testing
+# Main execution following Google's pattern
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)

@@ -1,19 +1,14 @@
 #!/bin/sh
-# ui/docker-entrypoint.sh
+# ui/docker-entrypoint.sh - Fixed version without file modification
 set -e
 
 echo "🚀 Starting AI Financial Advisor UI..."
 echo "Environment: ${NODE_ENV:-production}"
 echo "Coordinator API: ${COORDINATOR_API_URL:-coordinator-agent.financial-advisor.svc.cluster.local:8080}"
 
-# Inject runtime environment variables into built React app
-if [ -f /usr/share/nginx/html/static/js/main.*.js ]; then
-    echo "📝 Injecting runtime environment variables..."
-    
-    # Replace environment placeholders in the built JS files
-    find /usr/share/nginx/html/static/js -name "*.js" -exec sed -i \
-        "s|COORDINATOR_API_URL_PLACEHOLDER|${COORDINATOR_API_URL:-coordinator-agent.financial-advisor.svc.cluster.local:8080}|g" {} \;
-fi
+# Skip the sed injection since it causes permission issues
+# The React app will use environment variables at build time instead
+echo "📝 Environment variables configured at build time"
 
 echo "✅ UI initialization complete"
 

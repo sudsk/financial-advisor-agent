@@ -1,4 +1,4 @@
-# k8s/agents-deployment.yaml
+# k8s/agents-deployment.yaml - Fixed image references
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,17 +14,17 @@ spec:
       labels:
         app: budget-agent
     spec:
+      serviceAccountName: financial-advisor-ksa
       containers:
       - name: budget-agent
-        image: gcr.io/PROJECT_ID/budget-agent:latest
+        image: REGION-docker.pkg.dev/PROJECT_ID/financial-advisor/budget-agent:latest
         ports:
         - containerPort: 8080
         env:
-        - name: GEMINI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: gemini-secret
-              key: api-key
+        - name: PROJECT_ID
+          value: "PROJECT_ID"
+        - name: REGION
+          value: "REGION"
         resources:
           requests:
             memory: "256Mi"
@@ -48,17 +48,17 @@ spec:
       labels:
         app: investment-agent
     spec:
+      serviceAccountName: financial-advisor-ksa
       containers:
       - name: investment-agent
-        image: gcr.io/PROJECT_ID/investment-agent:latest
+        image: REGION-docker.pkg.dev/PROJECT_ID/financial-advisor/investment-agent:latest
         ports:
         - containerPort: 8080
         env:
-        - name: GEMINI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: gemini-secret
-              key: api-key
+        - name: PROJECT_ID
+          value: "PROJECT_ID"
+        - name: REGION
+          value: "REGION"
         resources:
           requests:
             memory: "256Mi"
@@ -82,17 +82,17 @@ spec:
       labels:
         app: security-agent
     spec:
+      serviceAccountName: financial-advisor-ksa
       containers:
       - name: security-agent
-        image: gcr.io/PROJECT_ID/security-agent:latest
+        image: REGION-docker.pkg.dev/PROJECT_ID/financial-advisor/security-agent:latest
         ports:
         - containerPort: 8080
         env:
-        - name: GEMINI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: gemini-secret
-              key: api-key
+        - name: PROJECT_ID
+          value: "PROJECT_ID"
+        - name: REGION
+          value: "REGION"
         resources:
           requests:
             memory: "256Mi"

@@ -1,4 +1,4 @@
-# k8s/mcp-server-deployment.yaml
+# k8s/mcp-server-deployment.yaml - Corrected
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,12 +16,12 @@ spec:
     spec:
       containers:
       - name: mcp-server
-        image: gcr.io/PROJECT_ID/mcp-server:latest
+        image: REGION-docker.pkg.dev/PROJECT_ID/financial-advisor/mcp-server:latest
         ports:
         - containerPort: 8080
         env:
         - name: BANK_ANTHOS_URL
-          value: "http://bank-of-anthos-frontend.default.svc.cluster.local:80"
+          value: "http://frontend.default.svc.cluster.local:80"
         resources:
           requests:
             memory: "256Mi"

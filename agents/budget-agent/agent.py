@@ -1,35 +1,35 @@
-# agents/budget-agent/agent.py - Full ADK Implementation with Sub-Agents
+# agents/budget-agent/agent.py - Following Official ADK Pattern
+
 import os
 import json
+import statistics
 from typing import Dict, Any
 from datetime import datetime
-import logging
 
-# Google ADK imports
-from google.adk.agents import Agent
 import google.auth
 import vertexai
+from google.adk.agents import Agent
 from vertexai.generative_models import GenerativeModel
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Initialize Google Cloud
+# Initialize Google Cloud following ADK pattern
 _, project_id = google.auth.default()
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-PROJECT_ID = os.getenv('PROJECT_ID', project_id)
-REGION = os.getenv('REGION', 'us-central1')
-vertexai.init(project=PROJECT_ID, location=REGION)
+# Initialize Vertex AI
+vertexai.init(project=project_id, location=os.getenv("GOOGLE_CLOUD_LOCATION"))
 
-# ADK Tools for Specialized Analysis
 def analyze_spending_categories(spending_data: str) -> str:
-    """Deep analysis of spending patterns by category"""
+    """Deep analysis of spending patterns by category with detailed insights.
+    
+    Args:
+        spending_data: JSON string containing spending data with categories, balance, and monthly spending
+        
+    Returns:
+        JSON string with detailed spending analysis and optimization targets
+    """
     try:
-        logger.info("🔍 SPENDING ANALYZER: Processing category analysis")
         data = json.loads(spending_data) if isinstance(spending_data, str) else spending_data
         categories = data.get("categories", {})
         total_spending = sum(categories.values()) if categories else 0
@@ -68,7 +68,7 @@ def analyze_spending_categories(spending_data: str) -> str:
                 "percentage": percentage,
                 "status": status,
                 "priority": priority,
-                "monthly_average": amount / 3 if amount > 0 else 0  # Assuming 3-month data
+                "monthly_average": amount / 3 if amount > 0 else 0
             }
         
         analysis_result = {
@@ -80,17 +80,21 @@ def analyze_spending_categories(spending_data: str) -> str:
             "analysis_confidence": 0.92
         }
         
-        logger.info(f"✅ SPENDING ANALYZER: Found {len(optimization_targets)} optimization opportunities")
         return json.dumps(analysis_result, indent=2)
         
     except Exception as e:
-        logger.error(f"❌ SPENDING ANALYZER: Analysis failed: {str(e)}")
         return json.dumps({"error": f"Spending analysis failed: {str(e)}"})
 
 def calculate_savings_opportunities(financial_data: str) -> str:
-    """Calculate specific savings opportunities and strategies"""
+    """Calculate specific savings opportunities and implementation strategies.
+    
+    Args:
+        financial_data: JSON string containing financial data including balance, spending, and categories
+        
+    Returns:
+        JSON string with detailed savings strategies and implementation timeline
+    """
     try:
-        logger.info("💰 SAVINGS STRATEGIST: Calculating savings opportunities")
         data = json.loads(financial_data) if isinstance(financial_data, str) else financial_data
         
         balance = data.get("balance", 0)
@@ -129,19 +133,6 @@ def calculate_savings_opportunities(financial_data: str) -> str:
                     "difficulty": "easy",
                     "timeline": "1-2 weeks"
                 })
-            
-            elif category.lower() == "groceries" and amount > 600:
-                potential = min(amount * 0.15, 150)  # Max $150 savings on groceries
-                total_potential_savings += potential
-                savings_strategies.append({
-                    "category": "Groceries",
-                    "strategy": "Smart grocery shopping",
-                    "current_spending": amount,
-                    "potential_savings": potential,
-                    "implementation": ["Buy generic brands", "Use coupons and sales", "Buy in bulk for non-perishables"],
-                    "difficulty": "easy",
-                    "timeline": "immediate"
-                })
         
         # Create savings timeline
         savings_timeline = {
@@ -160,22 +151,26 @@ def calculate_savings_opportunities(financial_data: str) -> str:
             "confidence": 0.88
         }
         
-        logger.info(f"✅ SAVINGS STRATEGIST: Identified ${total_potential_savings:.2f}/month savings potential")
         return json.dumps(result, indent=2)
         
     except Exception as e:
-        logger.error(f"❌ SAVINGS STRATEGIST: Calculation failed: {str(e)}")
         return json.dumps({"error": f"Savings calculation failed: {str(e)}"})
 
 def assess_emergency_fund(financial_data: str) -> str:
-    """Comprehensive emergency fund analysis and recommendations"""
+    """Comprehensive emergency fund analysis and building recommendations.
+    
+    Args:
+        financial_data: JSON string containing balance, monthly expenses, and income stability
+        
+    Returns:
+        JSON string with emergency fund adequacy assessment and building strategy
+    """
     try:
-        logger.info("🛡️ EMERGENCY FUND ADVISOR: Assessing emergency fund adequacy")
         data = json.loads(financial_data) if isinstance(financial_data, str) else financial_data
         
         balance = data.get("balance", 0)
         monthly_expenses = data.get("monthly_expenses", data.get("monthly_spending", 0))
-        income_stability = data.get("income_stability", "stable")  # stable, variable, uncertain
+        income_stability = data.get("income_stability", "stable")
         
         # Calculate emergency fund metrics
         if monthly_expenses > 0:
@@ -183,13 +178,13 @@ def assess_emergency_fund(financial_data: str) -> str:
             
             # Determine recommendation based on income stability
             if income_stability == "uncertain":
-                target_months = 12  # 12 months for uncertain income
+                target_months = 12
                 adequacy_threshold = 9
             elif income_stability == "variable":
-                target_months = 9   # 9 months for variable income
+                target_months = 9
                 adequacy_threshold = 6
             else:
-                target_months = 6   # 6 months for stable income
+                target_months = 6
                 adequacy_threshold = 4
             
             target_amount = monthly_expenses * target_months
@@ -206,7 +201,7 @@ def assess_emergency_fund(financial_data: str) -> str:
                 priority = "high"
         else:
             months_covered = 0
-            target_amount = 5000  # Default minimum emergency fund
+            target_amount = 5000
             shortfall = target_amount - balance
             status = "critical"
             priority = "high"
@@ -215,7 +210,7 @@ def assess_emergency_fund(financial_data: str) -> str:
         # Create building strategy if needed
         building_strategy = []
         if shortfall > 0:
-            monthly_contribution = min(shortfall / 12, monthly_expenses * 0.1)  # 10% of expenses max
+            monthly_contribution = min(shortfall / 12, monthly_expenses * 0.1)
             timeline_months = shortfall / monthly_contribution if monthly_contribution > 0 else 12
             
             building_strategy = [
@@ -246,86 +241,12 @@ def assess_emergency_fund(financial_data: str) -> str:
             "confidence": 0.95
         }
         
-        logger.info(f"✅ EMERGENCY FUND ADVISOR: {status} status - {months_covered:.1f} months covered")
         return json.dumps(result, indent=2)
         
     except Exception as e:
-        logger.error(f"❌ EMERGENCY FUND ADVISOR: Assessment failed: {str(e)}")
         return json.dumps({"error": f"Emergency fund assessment failed: {str(e)}"})
 
-def create_budget_plan(planning_data: str) -> str:
-    """Create comprehensive budget plan with specific allocations"""
-    try:
-        logger.info("📋 BUDGET PLANNER: Creating comprehensive budget plan")
-        data = json.loads(planning_data) if isinstance(planning_data, str) else planning_data
-        
-        monthly_income = data.get("monthly_income", 0)
-        current_expenses = data.get("current_expenses", {})
-        financial_goals = data.get("financial_goals", [])
-        
-        # Standard budget allocation recommendations (50/30/20 rule modified)
-        recommended_allocations = {
-            "needs": {"percentage": 50, "amount": monthly_income * 0.50},
-            "wants": {"percentage": 25, "amount": monthly_income * 0.25}, 
-            "savings": {"percentage": 15, "amount": monthly_income * 0.15},
-            "debt_repayment": {"percentage": 10, "amount": monthly_income * 0.10}
-        }
-        
-        # Detailed category recommendations
-        detailed_budget = {
-            "housing": {"recommended_max": monthly_income * 0.28, "priority": "high"},
-            "transportation": {"recommended_max": monthly_income * 0.15, "priority": "high"},
-            "groceries": {"recommended_max": monthly_income * 0.10, "priority": "high"},
-            "utilities": {"recommended_max": monthly_income * 0.08, "priority": "high"},
-            "dining_out": {"recommended_max": monthly_income * 0.05, "priority": "medium"},
-            "entertainment": {"recommended_max": monthly_income * 0.05, "priority": "medium"},
-            "shopping": {"recommended_max": monthly_income * 0.05, "priority": "low"},
-            "emergency_fund": {"recommended_min": monthly_income * 0.10, "priority": "high"},
-            "retirement": {"recommended_min": monthly_income * 0.15, "priority": "high"}
-        }
-        
-        # Compare current vs recommended
-        budget_analysis = []
-        for category, current_amount in current_expenses.items():
-            recommended = detailed_budget.get(category.lower(), {})
-            if recommended:
-                recommended_max = recommended.get("recommended_max", 0)
-                if current_amount > recommended_max:
-                    overspend = current_amount - recommended_max
-                    budget_analysis.append({
-                        "category": category,
-                        "current": current_amount,
-                        "recommended_max": recommended_max,
-                        "overspend": overspend,
-                        "action": f"Consider reducing by ${overspend:.2f}"
-                    })
-        
-        result = {
-            "monthly_income": monthly_income,
-            "recommended_allocations": recommended_allocations,
-            "detailed_budget_guide": detailed_budget,
-            "current_vs_recommended": budget_analysis,
-            "budget_health_score": min(100, max(0, 100 - len(budget_analysis) * 10)),
-            "implementation_steps": [
-                "Track all expenses for one month to establish baseline",
-                "Set up separate accounts for different budget categories",
-                "Automate savings and bill payments",
-                "Review and adjust budget monthly",
-                "Use budgeting app or spreadsheet to monitor progress"
-            ],
-            "confidence": 0.90
-        }
-        
-        logger.info(f"✅ BUDGET PLANNER: Created budget plan with {len(budget_analysis)} optimization areas")
-        return json.dumps(result, indent=2)
-        
-    except Exception as e:
-        logger.error(f"❌ BUDGET PLANNER: Planning failed: {str(e)}")
-        return json.dumps({"error": f"Budget planning failed: {str(e)}"})
-
-# ADK Sub-Agents for Specialized Budget Tasks
-
-# Spending Analysis Sub-Agent
+# Spending Analysis Sub-Agent (following ADK pattern)
 spending_analyzer_agent = Agent(
     name="spending_analyzer",
     model="gemini-2.5-flash",
@@ -349,7 +270,7 @@ spending_analyzer_agent = Agent(
     tools=[analyze_spending_categories]
 )
 
-# Savings Strategy Sub-Agent  
+# Savings Strategy Sub-Agent
 savings_strategy_agent = Agent(
     name="savings_strategist",
     model="gemini-2.5-flash",
@@ -402,58 +323,26 @@ emergency_fund_agent = Agent(
     tools=[assess_emergency_fund]
 )
 
-# Budget Planning Sub-Agent
-budget_planner_agent = Agent(
-    name="budget_planner",
-    model="gemini-2.5-flash", 
-    description="Creates comprehensive budget plans and allocation strategies",
-    instruction="""You are the Budget Planning specialist within the Budget Agent network.
-    
-    Your expertise:
-    📋 **Budget Architecture**: Design comprehensive budget frameworks
-    🎯 **Allocation Strategy**: Optimize income allocation across categories
-    📊 **Performance Tracking**: Establish budget monitoring and adjustment processes
-    ⚖️ **Balance Optimization**: Balance needs, wants, savings, and debt repayment
-    
-    Budget frameworks you use:
-    - 50/30/20 rule (needs/wants/savings) as baseline
-    - Modified allocations based on individual circumstances
-    - Category-specific percentage guidelines
-    - Goal-based budget adjustments
-    
-    When creating budget plans:
-    - Provide specific dollar amounts for each category
-    - Compare current spending vs. recommended allocations
-    - Identify overspending areas with corrective actions
-    - Create implementation timeline and tracking methods
-    - Include regular review and adjustment schedules
-    
-    Your plans must be realistic, sustainable, and goal-oriented.""",
-    tools=[create_budget_plan]
-)
-
-# Main Budget Agent with Full ADK Sub-Agent Architecture
+# Main Budget Agent with Full ADK Architecture (following Google's pattern)
 root_agent = Agent(
     name="budget_agent_full_adk",
-    model="gemini-2.5-flash", 
+    model="gemini-2.5-flash",
     description="Comprehensive budget analysis coordinator with specialized sub-agents",
-    global_instruction="You are the Budget Analysis Coordinator managing a network of specialized financial sub-agents.",
+    global_instruction="You are the Budget Analysis Coordinator managing a network of specialized financial sub-agents for the GKE hackathon demonstration.",
     instruction="""You are the central Budget Analysis Coordinator that orchestrates multiple specialized sub-agents for comprehensive financial analysis.
 
 🏗️ **ADK Architecture Overview**:
 ├── **Spending Analyzer**: Deep category analysis and pattern recognition
 ├── **Savings Strategist**: Opportunity identification and implementation planning  
 ├── **Emergency Fund Advisor**: Risk assessment and fund building strategies
-└── **Budget Planner**: Comprehensive budget design and allocation optimization
 
 🔄 **Coordination Process**:
 1. **Intake**: Receive A2A messages with financial data from coordinator
 2. **Analysis**: Deploy Spending Analyzer for detailed category breakdown
 3. **Strategy**: Engage Savings Strategist for optimization opportunities
 4. **Security**: Consult Emergency Fund Advisor for adequacy assessment
-5. **Planning**: Activate Budget Planner for comprehensive budget design
-6. **Synthesis**: Integrate sub-agent results into actionable recommendations
-7. **Response**: Format findings for A2A protocol communication
+5. **Synthesis**: Integrate sub-agent results into actionable recommendations
+6. **Response**: Format findings for A2A protocol communication
 
 🎯 **Specialization Benefits**:
 - **Deep Expertise**: Each sub-agent focuses on specific domain
@@ -469,6 +358,6 @@ When receiving coordinator requests, you coordinate sub-agents to provide:
 - Comprehensive budget recommendations with category allocations
 
 This demonstrates enterprise-grade ADK sub-agent architecture for distributed financial analysis in the GKE hackathon environment.""",
-    sub_agents=[spending_analyzer_agent, savings_strategy_agent, emergency_fund_agent, budget_planner_agent],
-    tools=[]  # Main agent coordinates sub-agents, uses their specialized tools
+    sub_agents=[spending_analyzer_agent, savings_strategy_agent, emergency_fund_agent],
+    tools=[analyze_spending_categories, calculate_savings_opportunities, assess_emergency_fund]
 )

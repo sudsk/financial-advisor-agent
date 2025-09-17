@@ -1,4 +1,4 @@
-# k8s/agents-deployment.yaml - Fixed image references
+# k8s/agents-deployment.yaml - Corrected with proper image references and env vars
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,9 +22,9 @@ spec:
         - containerPort: 8080
         env:
         - name: PROJECT_ID
-          value: "PROJECT_ID"
+          value: "PROJECT_ID_VALUE"
         - name: REGION
-          value: "REGION"
+          value: "REGION_VALUE"
         resources:
           requests:
             memory: "256Mi"
@@ -56,9 +56,9 @@ spec:
         - containerPort: 8080
         env:
         - name: PROJECT_ID
-          value: "PROJECT_ID"
+          value: "PROJECT_ID_VALUE"
         - name: REGION
-          value: "REGION"
+          value: "REGION_VALUE"
         resources:
           requests:
             memory: "256Mi"
@@ -90,9 +90,9 @@ spec:
         - containerPort: 8080
         env:
         - name: PROJECT_ID
-          value: "PROJECT_ID"
+          value: "PROJECT_ID_VALUE"
         - name: REGION
-          value: "REGION"
+          value: "REGION_VALUE"
         resources:
           requests:
             memory: "256Mi"

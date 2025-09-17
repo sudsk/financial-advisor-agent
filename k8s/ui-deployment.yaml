@@ -1,4 +1,4 @@
-# k8s/ui-deployment.yaml - React UI Deployment
+# k8s/ui-deployment.yaml - Fixed React UI Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: react-ui
-        image: PROJECT_ID-docker.pkg.dev/PROJECT_ID/financial-advisor/financial-advisor-ui:latest
+        image: REGION-docker.pkg.dev/PROJECT_ID/financial-advisor/financial-advisor-ui:latest
         ports:
         - containerPort: 3000
           name: http

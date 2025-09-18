@@ -1,10 +1,11 @@
-// ui/src/api/api.js
+// ui/src/api/api.js - Fixed for browser access
 import axios from 'axios';
 
-// API Configuration
+// API Configuration - Fixed for browser environment
 const API_CONFIG = {
   development: 'http://localhost:8080',
-  production: 'http://coordinator-agent.financial-advisor.svc.cluster.local:8080',
+  // For production, use the LoadBalancer IP or proxy through nginx
+  production: '/api', // Will be proxied by nginx to coordinator agent
   timeout: 60000 // 60 seconds for AI processing
 };
 
@@ -12,7 +13,7 @@ const API_CONFIG = {
 const api = axios.create({
   baseURL: process.env.NODE_ENV === 'development' 
     ? API_CONFIG.development 
-    : API_CONFIG.production,
+    : API_CONFIG.production, // Use nginx proxy in production
   timeout: API_CONFIG.timeout,
   headers: {
     'Content-Type': 'application/json',
@@ -22,7 +23,7 @@ const api = axios.create({
 // Request interceptor for logging
 api.interceptors.request.use(
   (config) => {
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
@@ -47,6 +48,8 @@ api.interceptors.response.use(
       error.message = 'API endpoint not found';
     } else if (error.response?.status >= 500) {
       error.message = 'Server error - agents may be unavailable';
+    } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      error.message = 'Network error - falling back to simulation mode';
     }
     
     return Promise.reject(error);

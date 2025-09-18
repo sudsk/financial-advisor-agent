@@ -6,7 +6,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: process.env.NODE_ENV === 'development' 
     ? 'http://localhost:8080'
-    : `http://coordinator-agent.financial-advisor.svc.cluster.local:8080`,
+    : '/api', // Use nginx proxy instead of direct K8s DNS
   timeout: 60000, // 60 second timeout for AI processing
   headers: {
     'Content-Type': 'application/json',

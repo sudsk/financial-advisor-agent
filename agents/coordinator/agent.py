@@ -63,25 +63,34 @@ class A2AMessage:
 
 async def get_financial_snapshot_via_mcp(user_id: str, account_id: str) -> Dict[str, Any]:
     """MCP Protocol: Get financial data from Bank of Anthos"""
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"🔗 MCP: Fetching financial snapshot for {user_id}")
-            response = await client.post(
-                f"{MCP_SERVER_URL}/tools/get_financial_snapshot",
-                json={"user_id": user_id, "account_id": account_id}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                logger.info(f"✅ MCP: Successfully retrieved financial data")
-                return data
-            else:
-                logger.warning(f"⚠️ MCP: Server error {response.status_code}, using mock data")
-                return generate_mock_financial_data(user_id, account_id)
-                
-    except Exception as e:
-        logger.error(f"❌ MCP: Error fetching financial data: {str(e)}")
-        return generate_mock_financial_data(user_id, account_id)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        logger.info(f"MCP: Fetching financial snapshot for {user_id}")
+        
+        # Get authentication token from MCP demo_auth
+        auth_response = await client.post(f"{MCP_SERVER_URL}/tools/demo_auth")
+        
+        if auth_response.status_code != 200:
+            raise Exception(f"MCP authentication failed: {auth_response.status_code}")
+        
+        auth_data = auth_response.json()
+        if not auth_data.get("result", {}).get("success"):
+            raise Exception("MCP authentication unsuccessful")
+        
+        token = auth_data["result"]["token"]
+        logger.info("MCP: Authentication successful")
+        
+        # Get financial snapshot with the token
+        response = await client.post(
+            f"{MCP_SERVER_URL}/tools/get_financial_snapshot",
+            json={"token": token}
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"MCP financial snapshot failed: {response.status_code}")
+        
+        data = response.json()
+        logger.info("MCP: Successfully retrieved Bank of Anthos data")
+        return data
 
 async def send_a2a_message(agent_endpoint: str, message: A2AMessage) -> Dict[str, Any]:
     """A2A Protocol: Send message to remote agent"""
@@ -196,23 +205,7 @@ async def coordinate_agents_via_a2a(query: str, financial_data: Dict[str, Any]) 
     logger.info(f"✅ A2A: Coordination complete. {len([r for r in results if r['status'] == 'success'])}/{len(results)} agents responded successfully")
     return results
 
-def generate_mock_financial_data(user_id: str, account_id: str) -> Dict[str, Any]:
-    """Generate mock financial data for demo"""
-    return {
-        "profile": {"user_id": user_id, "account_id": account_id, "name": "Demo User"},
-        "balance": {"amount": 15750.50, "currency": "USD"},
-        "recent_transactions": [
-            {"amount": -45.67, "category": "Groceries", "timestamp": "2025-01-14T14:30:00Z"},
-            {"amount": -125.00, "category": "Dining", "timestamp": "2025-01-13T19:15:00Z"},
-            {"amount": 2500.00, "category": "Salary", "timestamp": "2025-01-01T09:00:00Z"}
-        ],
-        "spending_analysis": {
-            "total_spending": 4500.00,
-            "categories": {"Groceries": 800, "Dining": 450, "Gas": 200, "Entertainment": 300},
-            "average_monthly": 1500.00
-        },
-        "contacts": [{"name": "John Doe", "account": "987654321", "relationship": "friend"}]
-    }
+# Removed generate_mock_financial_data function - no more mock data
 
 async def coordinate_financial_analysis(query: str, user_data: str) -> str:
     """Main ADK tool that showcases MCP + A2A coordination"""
@@ -228,9 +221,26 @@ async def coordinate_financial_analysis(query: str, user_data: str) -> str:
         logger.info(f"📋 STEP 1: MCP Protocol - Fetching data from Bank of Anthos")
         financial_data = await get_financial_snapshot_via_mcp(user_id, account_id)
         
-        # Step 2: A2A Protocol - Coordinate with distributed agents
-        logger.info(f"🤝 STEP 2: A2A Protocol - Coordinating with distributed agents")
-        agent_responses = await coordinate_agents_via_a2a(query, financial_data)
+        # Step 2: A2A Protocol - Coordinate with distributed agents (TEMPORARILY DISABLED)
+        logger.info(f"🤝 STEP 2: A2A Protocol - Using mock coordination for testing")
+        agent_responses = [
+            {
+                "agent": "budget",
+                "response": {"payload": {"analysis_results": {"summary": "Budget analysis complete"}}},
+                "status": "success"
+            },
+            {
+                "agent": "investment", 
+                "response": {"payload": {"analysis_results": {"summary": "Investment analysis complete"}}},
+                "status": "success"
+            },
+            {
+                "agent": "security",
+                "response": {"payload": {"analysis_results": {"summary": "Security analysis complete"}}}, 
+                "status": "success"
+            }
+        ]
+        # agent_responses = await coordinate_agents_via_a2a(query, financial_data)  # Temporarily disabled
         
         # Step 3: ADK - Synthesize responses using Vertex AI
         logger.info(f"🧠 STEP 3: ADK - Synthesizing responses with Vertex AI")

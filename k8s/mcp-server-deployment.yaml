@@ -20,8 +20,6 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        # Remove the wrong BANK_ANTHOS_URL - not needed!
-        # The bank_anthos_client.py has hardcoded URLs that work
         resources:
           requests:
             memory: "256Mi"
@@ -33,5 +31,5 @@ spec:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 120
+          periodSeconds: 120

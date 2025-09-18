@@ -5,7 +5,7 @@ metadata:
   name: budget-agent
   namespace: financial-advisor
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: budget-agent
@@ -39,7 +39,7 @@ metadata:
   name: investment-agent
   namespace: financial-advisor
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: investment-agent
@@ -73,7 +73,7 @@ metadata:
   name: security-agent
   namespace: financial-advisor
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: security-agent

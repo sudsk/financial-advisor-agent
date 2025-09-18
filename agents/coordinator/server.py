@@ -93,7 +93,7 @@ async def analyze_financial_query(request: dict):
             "account_id": account_id
         }
         
-        result = coordinate_financial_analysis(query, json.dumps(user_data))
+        result = await coordinate_financial_analysis(query, json.dumps(user_data))
         
         try:
             parsed_result = json.loads(result)

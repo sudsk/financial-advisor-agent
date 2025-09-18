@@ -4,7 +4,7 @@ set -e
 
 echo "🚀 Starting AI Financial Advisor UI..."
 echo "Environment: ${NODE_ENV:-production}"
-echo "Coordinator API: ${COORDINATOR_API_URL:-coordinator-agent.financial-advisor.svc.cluster.local:8080}"
+echo "API Base URL: ${REACT_APP_API_URL:-/api}"
 
 # Skip the sed injection since it causes permission issues
 # The React app will use environment variables at build time instead

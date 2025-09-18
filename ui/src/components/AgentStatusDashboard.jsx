@@ -50,16 +50,16 @@ const shimmer = keyframes`
 
 const AgentCard = styled(motion.div)`
   background: ${props => {
-    if (props.status === 'active') return 'linear-gradient(135deg, #d4edda, #c3e6cb)';
-    if (props.status === 'processing') return 'linear-gradient(135deg, #fff3cd, #ffeaa7)';
+    if (props.$status === 'active') return 'linear-gradient(135deg, #d4edda, #c3e6cb)';
+    if (props.$status === 'processing') return 'linear-gradient(135deg, #fff3cd, #ffeaa7)';
     return '#f8f9fa';
   }};
   border-radius: 12px;
   padding: 20px;
   text-align: center;
   border: 3px solid ${props => {
-    if (props.status === 'active') return '#28a745';
-    if (props.status === 'processing') return '#ffc107';
+    if (props.$status === 'active') return '#28a745';
+    if (props.$status === 'processing') return '#ffc107';
     return '#e1e8ed';
   }};
   transition: all 0.3s ease;
@@ -67,7 +67,7 @@ const AgentCard = styled(motion.div)`
   overflow: hidden;
   cursor: pointer;
 
-  ${props => props.status === 'processing' && `
+  ${props => props.$status === 'processing' && `
     animation: ${pulse} 1.5s infinite;
   `}
 
@@ -99,8 +99,8 @@ const AgentIcon = styled.div`
   justify-content: center;
   align-items: center;
   color: ${props => {
-    if (props.status === 'active') return '#28a745';
-    if (props.status === 'processing') return '#ffc107';
+    if (props.$status === 'active') return '#28a745';
+    if (props.$status === 'processing') return '#ffc107';
     return '#6c757d';
   }};
 `;
@@ -126,8 +126,8 @@ const StatusIndicator = styled(motion.div)`
   height: 12px;
   border-radius: 50%;
   background: ${props => {
-    if (props.status === 'active') return '#28a745';
-    if (props.status === 'processing') return '#ffc107';
+    if (props.$status === 'active') return '#28a745';
+    if (props.$status === 'processing') return '#ffc107';
     return '#6c757d';
   }};
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
@@ -203,7 +203,7 @@ function AgentStatusDashboard({ agentStatuses }) {
           return (
             <AgentCard
               key={agent.id}
-              status={status.status}
+              $status={status.status}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -211,7 +211,7 @@ function AgentStatusDashboard({ agentStatuses }) {
               whileTap={{ scale: 0.98 }}
             >
               <StatusIndicator
-                status={status.status}
+                $status={status.status}
                 animate={status.status === 'processing' ? {
                   scale: [1, 1.2, 1],
                   opacity: [1, 0.7, 1]
@@ -219,7 +219,7 @@ function AgentStatusDashboard({ agentStatuses }) {
                 transition={{ duration: 1, repeat: status.status === 'processing' ? Infinity : 0 }}
               />
               
-              <AgentIcon status={status.status}>
+              <AgentIcon $status={status.status}>
                 <IconComponent size={40} />
               </AgentIcon>
               

@@ -2,6 +2,7 @@
 
 import os
 import json
+import logging
 from datetime import datetime
 
 import google.auth
@@ -12,7 +13,11 @@ from google.cloud import logging as google_cloud_logging
 # Initialize Google Cloud following official pattern
 _, project_id = google.auth.default()
 logging_client = google_cloud_logging.Client()
-logger = logging_client.logger(__name__)
+cloud_logger = logging_client.logger(__name__)
+
+# Set up standard Python logger for local use
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Environment setup (following Google's pattern)
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
@@ -253,7 +258,7 @@ async def get_a2a_capabilities():
 @app.post("/feedback")
 def collect_feedback(feedback: dict) -> dict[str, str]:
     """Collect and log feedback following Google's pattern."""
-    logger.log_struct(feedback, severity="INFO")
+    cloud_logger.log_struct(feedback, severity="INFO")
     return {"status": "success"}
 
 # Main execution following Google's pattern

@@ -20,6 +20,9 @@ const api = axios.create({
   }
 });
 
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Base URL:', api.defaults.baseURL);
+
 // Request interceptor for logging
 api.interceptors.request.use(
   (config) => {

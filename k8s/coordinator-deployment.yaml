@@ -5,7 +5,7 @@ metadata:
   name: coordinator-agent
   namespace: financial-advisor
 spec:
-  replicas: 3
+  replicas:1
   selector:
     matchLabels:
       app: coordinator-agent

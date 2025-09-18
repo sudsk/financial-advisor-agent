@@ -214,7 +214,7 @@ def generate_mock_financial_data(user_id: str, account_id: str) -> Dict[str, Any
         "contacts": [{"name": "John Doe", "account": "987654321", "relationship": "friend"}]
     }
 
-def coordinate_financial_analysis(query: str, user_data: str) -> str:
+async def coordinate_financial_analysis(query: str, user_data: str) -> str:
     """Main ADK tool that showcases MCP + A2A coordination"""
     try:
         logger.info(f"🎯 COORDINATOR: Starting financial analysis")
@@ -226,11 +226,11 @@ def coordinate_financial_analysis(query: str, user_data: str) -> str:
         
         # Step 1: MCP Protocol - Get financial data from Bank of Anthos
         logger.info(f"📋 STEP 1: MCP Protocol - Fetching data from Bank of Anthos")
-        financial_data = asyncio.run(get_financial_snapshot_via_mcp(user_id, account_id))
+        financial_data = await get_financial_snapshot_via_mcp(user_id, account_id)
         
         # Step 2: A2A Protocol - Coordinate with distributed agents
         logger.info(f"🤝 STEP 2: A2A Protocol - Coordinating with distributed agents")
-        agent_responses = asyncio.run(coordinate_agents_via_a2a(query, financial_data))
+        agent_responses = await coordinate_agents_via_a2a(query, financial_data)
         
         # Step 3: ADK - Synthesize responses using Vertex AI
         logger.info(f"🧠 STEP 3: ADK - Synthesizing responses with Vertex AI")

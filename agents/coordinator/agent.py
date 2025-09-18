@@ -258,9 +258,17 @@ async def coordinate_financial_analysis(query: str, user_data: str) -> str:
         })
 
 def synthesize_multi_agent_response(query: str, agent_responses: List[Dict], financial_data: Dict) -> Dict[str, Any]:
-    """Synthesize A2A agent responses using Vertex AI"""
+    """Synthesize A2A agent responses using real financial data and Vertex AI"""
     
-    # Extract insights from A2A responses
+    # Extract real financial insights from Bank of Anthos data
+    balance = financial_data.get("balance", {}).get("balance_dollars", 0)
+    spending_analysis = financial_data.get("spending_analysis", {})
+    total_outgoing = spending_analysis.get("total_outgoing_dollars", 0)
+    total_incoming = spending_analysis.get("total_incoming_dollars", 0)
+    net_flow = spending_analysis.get("net_flow_dollars", 0)
+    transaction_count = spending_analysis.get("transaction_count", 0)
+    
+    # Extract insights from A2A agent responses
     agent_insights = {}
     successful_agents = []
     
@@ -270,65 +278,60 @@ def synthesize_multi_agent_response(query: str, agent_responses: List[Dict], fin
             agent_insights[agent_name] = response["response"]
             successful_agents.append(agent_name)
     
-    # Generate contextual response based on query
-    if "house" in query.lower():
-        base_response = {
-            "summary": "🏠 Based on your house-saving goal, our distributed AI agent network recommends a coordinated savings and investment strategy.",
-            "detailed_plan": [
-                "Increase savings rate by optimizing discretionary spending (Budget Agent analysis)",
-                "Implement balanced investment portfolio for down payment timeline (Investment Agent strategy)",
-                "Monitor financial health and maintain emergency fund (Security Agent oversight)",
-                "Coordinate monthly reviews across all financial aspects"
-            ]
-        }
-    elif "retirement" in query.lower():
-        base_response = {
-            "summary": "🏖️ For retirement planning, our agent network coordinated a comprehensive long-term wealth building strategy.",
-            "detailed_plan": [
-                "Maximize tax-advantaged retirement contributions (Investment Agent priority)",
-                "Optimize current budget to increase retirement savings rate (Budget Agent analysis)",
-                "Implement risk-appropriate asset allocation for timeline (Security & Investment Agent coordination)",
-                "Establish automated contribution increases annually"
-            ]
-        }
-    else:
-        base_response = {
-            "summary": "💼 Our distributed agent network has coordinated a comprehensive financial analysis across multiple domains.",
-            "detailed_plan": [
-                "Budget optimization through spending pattern analysis",
-                "Investment strategy aligned with risk tolerance and goals", 
-                "Security monitoring and financial health assessment",
-                "Coordinated implementation timeline"
-            ]
-        }
+    # Generate analysis using Vertex AI with real data
+    model = GenerativeModel('gemini-pro')
+    analysis_prompt = f"""
+    Analyze this real financial situation and provide specific advice:
     
-    # Add A2A coordination metadata
-    base_response.update({
+    User Query: "{query}"
+    Current Balance: ${balance:,.2f}
+    Monthly Outgoing: ${total_outgoing/3:.2f} (based on recent activity)
+    Monthly Incoming: ${total_incoming/3:.2f}
+    Net Monthly Flow: ${net_flow/3:.2f}
+    Transaction Count: {transaction_count}
+    
+    Provide specific, actionable financial advice based on this real data.
+    Focus on concrete numbers and realistic recommendations.
+    """
+    
+    try:
+        ai_response = model.generate_content(analysis_prompt)
+        ai_analysis = ai_response.text
+    except Exception as e:
+        logger.error(f"Vertex AI analysis failed: {str(e)}")
+        ai_analysis = "AI analysis temporarily unavailable"
+    
+    # Build response with real data and AI insights
+    response = {
+        "summary": f"Based on your current balance of ${balance:,.2f} and monthly cash flow of ${net_flow/3:.2f}, here's your personalized financial analysis:",
+        "detailed_plan": [
+            f"Current financial position: ${balance:,.2f} balance with {transaction_count} recent transactions",
+            f"Monthly spending pattern: ${total_outgoing/3:.2f} outgoing, ${total_incoming/3:.2f} incoming",
+            f"Net cash flow: ${net_flow/3:.2f} per month {'(positive)' if net_flow > 0 else '(needs attention)'}",
+            "Specific recommendations based on your actual spending patterns"
+        ],
         "key_insights": [
-            f"✅ {len(successful_agents)}/{len(agent_responses)} agents coordinated successfully",
-            "🔗 MCP Protocol: Real-time Bank of Anthos data integration",
-            "📡 A2A Protocol: Distributed agent communication across Kubernetes pods",
-            "🧠 ADK Framework: Intelligent coordination and synthesis"
+            f"Real data analysis: {len(successful_agents)}/{len(agent_responses)} agents coordinated successfully",
+            f"Account analysis: {transaction_count} transactions processed from Bank of Anthos",
+            f"Cash flow: {'Positive' if net_flow > 0 else 'Negative'} monthly flow of ${abs(net_flow/3):.2f}",
+            f"AI Analysis: {ai_analysis[:200]}..." if len(ai_analysis) > 200 else ai_analysis
         ],
         "next_actions": [
-            "Monitor cross-agent recommendations implementation",
-            "Schedule coordinated review across all agents",
-            "Track progress through integrated dashboard"
+            f"Monitor your ${abs(net_flow/3):.2f} monthly {'surplus' if net_flow > 0 else 'deficit'}",
+            "Review transaction patterns identified in Bank of Anthos data",
+            "Implement agent recommendations based on real spending analysis",
+            "Set up automated monitoring for account balance changes"
         ],
-        "monitoring": "Distributed agents will continue monitoring and provide coordinated updates",
-        "hackathon_architecture": {
-            "mcp_integration": "✅ Bank of Anthos real-time data",
-            "a2a_protocol": f"✅ {len(successful_agents)} agents coordinated via network",
-            "adk_framework": "✅ Intelligent orchestration and synthesis",
-            "vertex_ai": "✅ Gemini Pro for analysis and planning",
-            "gke_deployment": "✅ Distributed across Kubernetes pods",
-            "agents_status": {agent["agent"]: agent["status"] for agent in agent_responses},
-            "coordination_id": str(uuid.uuid4()),
-            "processing_time": datetime.now().isoformat()
+        "monitoring": f"Tracking {transaction_count} transactions with current balance ${balance:,.2f}",
+        "real_data_summary": {
+            "balance": balance,
+            "monthly_net_flow": net_flow / 3,
+            "transaction_count": transaction_count,
+            "data_source": "Bank of Anthos real-time integration"
         }
-    })
+    }
     
-    return base_response
+    return response
 
 # ADK Main Agent with A2A + MCP showcase
 root_agent = Agent(

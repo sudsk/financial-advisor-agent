@@ -40,8 +40,8 @@ const Header = styled(motion.header)`
   text-align: center;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
-  padding: 30px;
-  margin-bottom: 30px;
+  padding: 25px;
+  margin-bottom: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   position: relative;
@@ -83,31 +83,31 @@ const WelcomeMessage = styled.div`
 
 const Title = styled.h1`
   color: #2c3e50;
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+  font-size: 2.2rem;
+  margin-bottom: 8px;
   font-weight: 700;
 
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 `;
 
 const Subtitle = styled.p`
   color: #7f8c8d;
-  font-size: 1.2rem;
-  margin-bottom: 5px;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
 
   &.tech-stack {
     color: #3498db;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    margin-top: 10px;
+    margin-top: 8px;
   }
 `;
 
 // NEW: Agent Status Section (full width below header)
 const AgentStatusSection = styled.div`
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 `;
 
 // NEW: Main Content Area (query + results side by side)

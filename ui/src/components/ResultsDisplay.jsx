@@ -1,4 +1,4 @@
-// ui/src/components/ResultsDisplay.jsx
+// ui/src/components/ResultsDisplay.jsx - Fixed with proper markdown rendering
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -69,6 +69,11 @@ const RecommendationTitle = styled.div`
 const RecommendationContent = styled.div`
   color: #555;
   line-height: 1.6;
+  
+  /* Handle markdown-style formatting */
+  p {
+    margin-bottom: 10px;
+  }
 
   ul {
     margin: 10px 0;
@@ -82,6 +87,28 @@ const RecommendationContent = styled.div`
     &::marker {
       color: #667eea;
     }
+  }
+
+  /* Style for bold text (markdown **text**) */
+  strong {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  /* Style for emphasis (markdown *text*) */
+  em {
+    font-style: italic;
+    color: #495057;
+  }
+
+  /* Style for inline code */
+  code {
+    background: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #e83e8c;
   }
 `;
 
@@ -173,6 +200,62 @@ const ProcessingTime = styled.div`
   font-weight: 600;
 `;
 
+// Helper function to process markdown-like text
+const processMarkdownText = (text) => {
+  if (!text) return '';
+  
+  return text
+    // Convert **bold** to <strong>
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Convert *italic* to <em>
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+    // Convert `code` to <code>
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Convert line breaks to <br>
+    .replace(/\n/g, '<br/>');
+};
+
+// Component to render processed markdown text
+const MarkdownText = ({ children }) => {
+  if (Array.isArray(children)) {
+    return (
+      <div>
+        {children.map((item, index) => (
+          <div 
+            key={index}
+            dangerouslySetInnerHTML={{ __html: processMarkdownText(item) }}
+            style={{ marginBottom: '8px' }}
+          />
+        ))}
+      </div>
+    );
+  }
+  
+  return (
+    <div dangerouslySetInnerHTML={{ __html: processMarkdownText(children) }} />
+  );
+};
+
+// Component to render lists with proper markdown processing
+const MarkdownList = ({ items }) => {
+  if (!items || !Array.isArray(items)) return null;
+
+  return (
+    <ul>
+      {items.map((item, index) => (
+        <motion.li
+          key={index}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 * index, duration: 0.3 }}
+        >
+          <MarkdownText>{item}</MarkdownText>
+        </motion.li>
+      ))}
+    </ul>
+  );
+};
+
 function ResultsDisplay({ results }) {
   if (!results) return null;
 
@@ -182,13 +265,15 @@ function ResultsDisplay({ results }) {
     key_insights = [],
     next_actions = [],
     monitoring = '',
-    adk_metadata = {}
+    timeline = '',
+    coordination_metadata = {}
   } = results;
 
   // Extract confidence scores from various possible locations
   const confidence_scores = 
+    results.confidence_scores ||
     results.metadata?.confidence_scores || 
-    adk_metadata?.confidence_scores || 
+    coordination_metadata?.confidence_scores || 
     { coordinator: 0.92, budget: 0.88, investment: 0.91, security: 0.95 };
 
   const cardVariants = {
@@ -226,7 +311,9 @@ function ResultsDisplay({ results }) {
             <Lightbulb size={20} />
             Executive Summary
           </RecommendationTitle>
-          <RecommendationContent>{summary}</RecommendationContent>
+          <RecommendationContent>
+            <MarkdownText>{summary}</MarkdownText>
+          </RecommendationContent>
         </RecommendationCard>
       )}
 
@@ -242,18 +329,7 @@ function ResultsDisplay({ results }) {
             Action Plan
           </RecommendationTitle>
           <RecommendationContent>
-            <ul>
-              {detailed_plan.map((plan, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * index, duration: 0.3 }}
-                >
-                  {plan}
-                </motion.li>
-              ))}
-            </ul>
+            <MarkdownList items={detailed_plan} />
           </RecommendationContent>
         </RecommendationCard>
       )}
@@ -270,18 +346,7 @@ function ResultsDisplay({ results }) {
             Agent Insights
           </RecommendationTitle>
           <RecommendationContent>
-            <ul>
-              {key_insights.map((insight, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * index, duration: 0.3 }}
-                >
-                  {insight}
-                </motion.li>
-              ))}
-            </ul>
+            <MarkdownList items={key_insights} />
           </RecommendationContent>
           
           {Object.keys(confidence_scores).length > 0 && (
@@ -314,25 +379,31 @@ function ResultsDisplay({ results }) {
             Next Steps
           </RecommendationTitle>
           <RecommendationContent>
-            <ul>
-              {next_actions.map((action, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * index, duration: 0.3 }}
-                >
-                  {action}
-                </motion.li>
-              ))}
-            </ul>
+            <MarkdownList items={next_actions} />
+          </RecommendationContent>
+        </RecommendationCard>
+      )}
+
+      {timeline && (
+        <RecommendationCard
+          custom={4}
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+        >
+          <RecommendationTitle>
+            <Clock size={20} />
+            Timeline
+          </RecommendationTitle>
+          <RecommendationContent>
+            <MarkdownText>{timeline}</MarkdownText>
           </RecommendationContent>
         </RecommendationCard>
       )}
 
       {monitoring && (
         <RecommendationCard
-          custom={4}
+          custom={5}
           initial="hidden"
           animate="visible"
           variants={cardVariants}
@@ -341,12 +412,14 @@ function ResultsDisplay({ results }) {
             <BarChart3 size={20} />
             Progress Monitoring
           </RecommendationTitle>
-          <RecommendationContent>{monitoring}</RecommendationContent>
+          <RecommendationContent>
+            <MarkdownText>{monitoring}</MarkdownText>
+          </RecommendationContent>
         </RecommendationCard>
       )}
 
-      {/* ADK Metadata Section */}
-      {adk_metadata && Object.keys(adk_metadata).length > 0 && (
+      {/* Coordination Metadata Section */}
+      {coordination_metadata && Object.keys(coordination_metadata).length > 0 && (
         <MetadataSection
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -354,37 +427,63 @@ function ResultsDisplay({ results }) {
         >
           <MetadataTitle>
             <Clock size={18} />
-            ADK Processing Details
+            AI Coordination Details
           </MetadataTitle>
           <MetadataGrid>
-            {adk_metadata.coordinator_id && (
-              <MetadataItem>
-                <span>Coordinator ID:</span>
-                <span>{adk_metadata.coordinator_id}</span>
-              </MetadataItem>
-            )}
-            {adk_metadata.agents_coordinated && (
+            {coordination_metadata.agents_coordinated && (
               <MetadataItem>
                 <span>Agents Coordinated:</span>
-                <span>{adk_metadata.agents_coordinated.length}</span>
+                <span>{coordination_metadata.agents_coordinated}</span>
               </MetadataItem>
             )}
-            {adk_metadata.processing_time_ms && (
+            {coordination_metadata.architecture && (
+              <MetadataItem>
+                <span>Architecture:</span>
+                <span>{coordination_metadata.architecture}</span>
+              </MetadataItem>
+            )}
+            {coordination_metadata.ai_models && (
+              <MetadataItem>
+                <span>AI Models:</span>
+                <span>{coordination_metadata.ai_models.join(', ')}</span>
+              </MetadataItem>
+            )}
+            {coordination_metadata.data_sources && (
+              <MetadataItem>
+                <span>Data Sources:</span>
+                <span>{coordination_metadata.data_sources.join(', ')}</span>
+              </MetadataItem>
+            )}
+            {coordination_metadata.processing_time && (
               <MetadataItem>
                 <span>Processing Time:</span>
                 <ProcessingTime>
                   <Clock size={12} />
-                  {adk_metadata.processing_time_ms}ms
+                  {coordination_metadata.processing_time}
                 </ProcessingTime>
               </MetadataItem>
             )}
-            {adk_metadata.registry_status && (
-              <MetadataItem>
-                <span>Registry Status:</span>
-                <span>{adk_metadata.registry_status} agents</span>
-              </MetadataItem>
-            )}
           </MetadataGrid>
+          
+          {coordination_metadata.gke_hackathon_demo && (
+            <motion.div
+              style={{
+                marginTop: '15px',
+                padding: '12px 15px',
+                background: 'rgba(102, 126, 234, 0.1)',
+                borderRadius: '8px',
+                color: '#667eea',
+                fontSize: '0.9em',
+                fontWeight: '600',
+                textAlign: 'center'
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              🏆 Powered by GKE • ADK • MCP • A2A • Vertex AI Gemini
+            </motion.div>
+          )}
         </MetadataSection>
       )}
     </Container>

@@ -1,4 +1,4 @@
-// ui/src/App.jsx - Updated with authentication flow
+// ui/src/App.jsx - Updated with better layout structure
 import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -105,9 +105,15 @@ const Subtitle = styled.p`
   }
 `;
 
-const MainGrid = styled.div`
+// NEW: Agent Status Section (full width below header)
+const AgentStatusSection = styled.div`
+  margin-bottom: 30px;
+`;
+
+// NEW: Main Content Area (query + results side by side)
+const MainContentGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 30px;
   margin-bottom: 30px;
 
@@ -117,12 +123,50 @@ const MainGrid = styled.div`
   }
 `;
 
+// NEW: Query Section (left side)
+const QuerySection = styled(motion.div)`
+  /* Empty - styling handled by FinancialQueryInterface */
+`;
+
+// NEW: Results Section (right side)
+const ResultsSection = styled(motion.div)`
+  /* Container for results display */
+`;
+
+// NEW: Placeholder for results when none exist
+const ResultsPlaceholder = styled(motion.div)`
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 2px dashed #e1e8ed;
+`;
+
+const PlaceholderIcon = styled.div`
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+`;
+
+const PlaceholderTitle = styled.h3`
+  color: #666;
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+`;
+
+const PlaceholderText = styled.p`
+  color: #999;
+  font-size: 1rem;
+  line-height: 1.5;
+`;
+
 const LoadingSection = styled(motion.div)`
   text-align: center;
   padding: 40px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
-  margin-top: 30px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
 `;
@@ -239,6 +283,7 @@ function App() {
     <>
       <GlobalStyle />
       <AppContainer>
+        {/* HEADER - Top section */}
         <Header
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -263,11 +308,24 @@ function App() {
           </Subtitle>
         </Header>
 
-        <MainGrid>
+        {/* AGENT STATUS - Full width below header */}
+        <AgentStatusSection>
           <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <AgentStatusDashboard agentStatuses={agentStatuses} />
+          </motion.div>
+        </AgentStatusSection>
+
+        {/* MAIN CONTENT - Query on left, Results on right */}
+        <MainContentGrid>
+          {/* LEFT SIDE: Query Interface */}
+          <QuerySection
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
             <FinancialQueryInterface 
               onAnalyze={handleAnalyze}
@@ -275,48 +333,61 @@ function App() {
               onReset={handleReset}
               authToken={authState.token}
             />
-          </motion.div>
+          </QuerySection>
 
-          <motion.div
+          {/* RIGHT SIDE: Results Display */}
+          <ResultsSection
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <AgentStatusDashboard agentStatuses={agentStatuses} />
-          </motion.div>
-        </MainGrid>
-
-        <AnimatePresence>
-          {isLoading && (
-            <LoadingSection
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Spinner
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              />
-              <LoadingText>
-                AI agents are collaborating via A2A protocol to analyze your financial situation...
-              </LoadingText>
-            </LoadingSection>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showResults && results && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ResultsDisplay results={results} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <LoadingSection
+                  key="loading"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Spinner
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                  <LoadingText>
+                    AI agents are analyzing your financial situation...
+                  </LoadingText>
+                </LoadingSection>
+              ) : showResults && results ? (
+                <motion.div
+                  key="results"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ResultsDisplay results={results} />
+                </motion.div>
+              ) : (
+                <ResultsPlaceholder
+                  key="placeholder"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PlaceholderIcon>📊</PlaceholderIcon>
+                  <PlaceholderTitle>AI Analysis Results</PlaceholderTitle>
+                  <PlaceholderText>
+                    Ask a financial question to see personalized recommendations from our AI agents.
+                    <br /><br />
+                    Try scenarios like house savings, retirement planning, or debt optimization.
+                  </PlaceholderText>
+                </ResultsPlaceholder>
+              )}
+            </AnimatePresence>
+          </ResultsSection>
+        </MainContentGrid>
       </AppContainer>
     </>
   );

@@ -10,7 +10,7 @@ const Container = styled(motion.div)`
   padding: 18px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
-  min-height: 160px;
+  min-height: 180px;
 `;
 
 const Title = styled.h3`
@@ -46,7 +46,10 @@ const AgentCard = styled(motion.div)`
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  height: 100px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
   &:hover {
     transform: translateY(-1px);
@@ -56,7 +59,7 @@ const AgentCard = styled(motion.div)`
 
 const AgentIcon = styled.div`
   font-size: 1.6em;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -65,13 +68,15 @@ const AgentIcon = styled.div`
     if (props.$status === 'active') return '#28a745';
     return '#6c757d';
   }};
+  flex-shrink: 0;
 `;
 
 const AgentName = styled.div`
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   font-size: 0.9em;
+  flex-shrink: 0;
 `;
 
 const AgentStatusText = styled.div`
@@ -82,6 +87,11 @@ const AgentStatusText = styled.div`
     return '#666';
   }};
   font-weight: ${props => props.$status === 'processing' ? '600' : '500'};
+  line-height: 1.2;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const StatusIndicator = styled(motion.div)`
@@ -120,11 +130,12 @@ const ProcessingBadge = styled(motion.div)`
 `;
 
 const PerformanceMetrics = styled.div`
-  margin-top: 10px;
-  padding: 8px;
+  margin-top: 6px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.7);
   border-radius: 6px;
   font-size: 0.7em;
+  flex-shrink: 0;
 `;
 
 const MetricRow = styled.div`
@@ -251,23 +262,28 @@ function AgentStatusDashboard({ agentStatuses }) {
                 animate={status.status === 'processing' ? glowAnimation : {}}
               />
               
-              <AgentIcon $status={status.status}>
-                <motion.div
-                  animate={status.status === 'processing' ? {
-                    rotate: [0, 5, -5, 0],
-                    scale: [1, 1.1, 1]
-                  } : {}}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: status.status === 'processing' ? Infinity : 0,
-                    repeatType: 'reverse'
-                  }}
-                >
-                  <IconComponent size={26} />
-                </motion.div>
-              </AgentIcon>
+              {/* Top section with icon and name */}
+              <div>
+                <AgentIcon $status={status.status}>
+                  <motion.div
+                    animate={status.status === 'processing' ? {
+                      rotate: [0, 5, -5, 0],
+                      scale: [1, 1.1, 1]
+                    } : {}}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: status.status === 'processing' ? Infinity : 0,
+                      repeatType: 'reverse'
+                    }}
+                  >
+                    <IconComponent size={26} />
+                  </motion.div>
+                </AgentIcon>
+                
+                <AgentName>{agent.name}</AgentName>
+              </div>
               
-              <AgentName>{agent.name}</AgentName>
+              {/* Middle section with status text */}
               <AgentStatusText $status={status.status}>
                 {status.statusText}
                 {status.status === 'processing' && (
@@ -281,6 +297,7 @@ function AgentStatusDashboard({ agentStatuses }) {
                 )}
               </AgentStatusText>
               
+              {/* Bottom section with confidence */}
               {status.confidence > 0 && (
                 <PerformanceMetrics>
                   <MetricRow>

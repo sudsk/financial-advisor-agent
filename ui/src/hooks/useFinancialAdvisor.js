@@ -62,7 +62,7 @@ export function useFinancialAdvisor() {
     // Create realistic agent coordination timing for demo
     const timeouts = [
       setTimeout(() => {
-        console.log('🎬 Coordinator processing'); // DEBUG
+        console.log('🎬 Coordinator starts processing'); // DEBUG
         updateAgentStatus('coordinator', 'processing', 'Analyzing query...', 0.1);
       }, 500),
       
@@ -81,14 +81,20 @@ export function useFinancialAdvisor() {
         updateAgentStatus('security', 'processing', 'Risk assessment...', 0.7);
       }, 3500),
       
-      // Final completion states (set when real API completes)
+      // Agents complete, coordinator starts synthesis
       setTimeout(() => {
-        console.log('🎬 All agents completing'); // DEBUG
-        updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92);
-        updateAgentStatus('budget', 'active', 'Recommendations ready', 0.88);
-        updateAgentStatus('investment', 'active', 'Strategy prepared', 0.91);
+        console.log('🎬 Agents completing, coordinator synthesizing'); // DEBUG
+        updateAgentStatus('budget', 'active', 'Analysis complete', 0.88);
+        updateAgentStatus('investment', 'active', 'Strategy ready', 0.91);
         updateAgentStatus('security', 'active', 'Risk evaluated', 0.95);
-      }, 5000)
+        updateAgentStatus('coordinator', 'processing', 'Synthesizing results...', 0.8);
+      }, 4500),
+      
+      // Coordinator completes synthesis (set when real API completes)
+      setTimeout(() => {
+        console.log('🎬 Coordinator synthesis complete'); // DEBUG
+        updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92);
+      }, 6000)
     ];
     
     statusTimeoutRef.current = timeouts;

@@ -12,6 +12,17 @@ const api = axios.create({
     'Content-Type': 'application/json',
   }
 });
+const updateAgentStatus = useCallback((agentId, status, statusText, confidence = 0) => {
+  console.log(`🔥 UPDATING AGENT: ${agentId} to ${status}`); // ADD THIS
+  setAgentStatuses(prev => ({
+    ...prev,
+    [agentId]: { status, statusText, confidence }
+  }));
+}, []);
+
+useEffect(() => {
+  console.log(`🎯 AGENT STATUSES CHANGED:`, agentStatuses); // ADD THIS
+}, [agentStatuses]);
 
 // Mock data for demo purposes when API is unavailable
 const mockResponses = {

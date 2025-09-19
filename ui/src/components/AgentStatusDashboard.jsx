@@ -29,7 +29,7 @@ const AgentsGrid = styled.div`
 `;
 
 // Enhanced pulse animation for active processing
-const activePulse = keyframes`
+{/*const activePulse = keyframes`
   0% { 
     transform: scale(1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(255, 193, 7, 0.7);
@@ -42,26 +42,26 @@ const activePulse = keyframes`
     transform: scale(1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(255, 193, 7, 0.7);
   }
-`;
+`;*/}
 
 // Glowing border animation for processing
-const glowBorder = keyframes`
+{/*const glowBorder = keyframes`
   0% { border-color: #ffc107; }
   25% { border-color: #fd7e14; }
   50% { border-color: #ffc107; }
   75% { border-color: #fd7e14; }
   100% { border-color: #ffc107; }
-`;
+`;*/}
 
 // Shimmer effect for processing cards
-const shimmer = keyframes`
+{/*const shimmer = keyframes`
   0% {
     background-position: -200px 0;
   }
   100% {
     background-position: calc(200px + 100%) 0;
   }
-`;
+`;*/}
 
 const AgentCard = styled(motion.div)`
   background: ${props => {
@@ -83,7 +83,7 @@ const AgentCard = styled(motion.div)`
   cursor: pointer;
 
   /* Enhanced processing state styling */
-  ${props => props.$status === 'processing' && `
+  {/*${props => props.$status === 'processing' && `
     animation: ${activePulse} 1.5s infinite;
     border-animation: ${glowBorder} 2s infinite;
     z-index: 10;
@@ -106,7 +106,7 @@ const AgentCard = styled(motion.div)`
       animation: ${shimmer} 2s infinite;
       pointer-events: none;
     }
-  `}
+  `}*/}
 
   /* Regular hover effects for non-processing states */
   ${props => props.$status !== 'processing' && `
@@ -210,7 +210,7 @@ const ProcessingProgressBar = styled(motion.div)`
   z-index: 1;
 `;
 
-const progressAnimation = keyframes`
+{/*const progressAnimation = keyframes`
   0% {
     width: 0%;
     background-position: 0% 50%;
@@ -222,7 +222,7 @@ const progressAnimation = keyframes`
     width: 100%;
     background-position: 0% 50%;
   }
-`;
+`;*/} 
 
 function AgentStatusDashboard({ agentStatuses }) {
   const agents = [

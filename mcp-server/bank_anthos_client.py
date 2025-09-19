@@ -1,10 +1,11 @@
-# mcp-server/bank_anthos_client.py
+# mcp-server/bank_anthos_client.py - Enhanced with transaction categorization
 import httpx
 import asyncio
 from typing import Dict, List, Optional
 import json
 from datetime import datetime, timedelta
 import logging
+import re
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -150,7 +151,7 @@ class BankOfAnthosClient:
             }
     
     async def get_transaction_history(self, account_id: str, token: str, limit: int = 100) -> List[Dict]:
-        """GET /transactions/{accountId} - Transaction history"""
+        """GET /transactions/{accountId} - Transaction history with enhanced categorization"""
         try:
             url = f"{self.base_urls['transactionhistory']}/transactions/{account_id}"
             headers = await self._get_auth_headers(token)
@@ -158,10 +159,10 @@ class BankOfAnthosClient:
             
             if response.status_code == 200:
                 transactions = response.json()
-                # Convert to our standard format
+                # Convert to our standard format with categorization
                 formatted_transactions = []
                 for txn in transactions:
-                    formatted_transactions.append({
+                    enhanced_txn = {
                         "transactionId": txn.get("transactionId"),
                         "fromAccountNum": txn.get("fromAccountNum"),
                         "fromRoutingNum": txn.get("fromRoutingNum"),
@@ -169,128 +170,65 @@ class BankOfAnthosClient:
                         "toRoutingNum": txn.get("toRoutingNum"),
                         "amount": txn.get("amount"),  # in cents
                         "amount_dollars": txn.get("amount", 0) / 100.0,
-                        "timestamp": txn.get("timestamp")
-                    })
+                        "timestamp": txn.get("timestamp"),
+                        "category": self._categorize_transaction(txn, account_id),
+                        "is_outgoing": txn.get("fromAccountNum") == account_id,
+                        "description": self._generate_transaction_description(txn, account_id)
+                    }
+                    formatted_transactions.append(enhanced_txn)
+                
                 return formatted_transactions
             else:
                 logger.warning(f"Failed to get transactions for {account_id}: {response.status_code}")
-                # Return mock data for demo
-                return self._generate_mock_transactions(account_id, limit)
+                # Return enhanced mock data for demo
+                return self._generate_enhanced_mock_transactions(account_id, limit)
                 
         except Exception as e:
             logger.error(f"Error getting transactions for {account_id}: {str(e)}")
-            # Return mock data for demo
-            return self._generate_mock_transactions(account_id, limit)
+            # Return enhanced mock data for demo
+            return self._generate_enhanced_mock_transactions(account_id, limit)
     
-    def _generate_mock_transactions(self, account_id: str, limit: int) -> List[Dict]:
-        """Generate mock transaction data matching Bank of Anthos format"""
+    def _categorize_transaction(self, txn: Dict, user_account: str) -> str:
+        """Categorize transactions based on amount and patterns"""
+        amount = abs(float(txn.get("amount", 0)) / 100.0)
+        is_outgoing = txn.get("fromAccountNum") == user_account
+        
+        if not is_outgoing:
+            return "income"
+        
+        # Categorize outgoing transactions by amount patterns
+        if amount >= 1000:
+            return "major_expense"
+        elif amount >= 500:
+            return "significant_purchase"
+        elif amount >= 100:
+            return "regular_expense"
+        elif amount >= 20:
+            return "daily_spending"
+        else:
+            return "small_purchase"
+    
+    def _generate_transaction_description(self, txn: Dict, user_account: str) -> str:
+        """Generate human-readable transaction descriptions"""
+        amount = abs(float(txn.get("amount", 0)) / 100.0)
+        is_outgoing = txn.get("fromAccountNum") == user_account
+        
+        if is_outgoing:
+            return f"Payment of ${amount:.2f} to account {txn.get('toAccountNum', 'unknown')}"
+        else:
+            return f"Received ${amount:.2f} from account {txn.get('fromAccountNum', 'unknown')}"
+    
+    def _generate_enhanced_mock_transactions(self, account_id: str, limit: int) -> List[Dict]:
+        """Generate realistic mock transaction data with categories"""
         import random
         from datetime import datetime, timedelta
         
         transactions = []
         
-        # Real demo accounts from Bank of Anthos database
-        demo_accounts = ["1033623433", "1055757655", "1077441377"]  # alice, bob, eve
-        
-        for i in range(min(limit, 20)):  # Generate up to 20 mock transactions
-            date = datetime.now() - timedelta(days=random.randint(0, 30))
-            amount = random.randint(500, 10000)  # Amount in cents
-            is_outgoing = random.random() > 0.5
-            
-            if is_outgoing:
-                from_account = account_id
-                to_account = demo_accounts[random.randint(0, len(demo_accounts)-1)]
-            else:
-                from_account = demo_accounts[random.randint(0, len(demo_accounts)-1)]
-                to_account = account_id
-            
-            transactions.append({
-                "transactionId": i + 1,
-                "fromAccountNum": from_account,
-                "fromRoutingNum": "883745000",
-                "toAccountNum": to_account,
-                "toRoutingNum": "883745000",
-                "amount": amount,
-                "amount_dollars": amount / 100.0,
-                "timestamp": date.isoformat() + "Z"
-            })
-        
-        return sorted(transactions, key=lambda x: x["timestamp"], reverse=True)
-    
-    async def get_user_contacts(self, username: str, token: str) -> List[Dict]:
-        """GET /contacts/{username} - User contacts"""
-        try:
-            url = f"{self.base_urls['contacts']}/contacts/{username}"
-            headers = await self._get_auth_headers(token)
-            response = await self.client.get(url, headers=headers)
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.warning(f"Failed to get contacts for {username}: {response.status_code}")
-                # Return mock data for demo with real account IDs
-                return [
-                    {"label": "Alice", "account_num": "1033623433", "routing_num": "883745000", "is_external": False},
-                    {"label": "Bob", "account_num": "1055757655", "routing_num": "883745000", "is_external": False},
-                    {"label": "Eve", "account_num": "1077441377", "routing_num": "883745000", "is_external": False},
-                    {"label": "External Bank", "account_num": "9099791699", "routing_num": "808889588", "is_external": True}
-                ]
-                
-        except Exception as e:
-            logger.error(f"Error getting contacts for {username}: {str(e)}")
-            # Return mock data for demo with real account IDs
-            return [
-                {"label": "Alice", "account_num": "1033623433", "routing_num": "883745000", "is_external": False},
-                {"label": "Bob", "account_num": "1055757655", "routing_num": "883745000", "is_external": False},
-                {"label": "Eve", "account_num": "1077441377", "routing_num": "883745000", "is_external": False}
-            ]
-    
-    async def analyze_spending_patterns(self, account_id: str, token: str, days: int = 90) -> Dict:
-        """Analyze spending patterns for budget agent"""
-        try:
-            transactions = await self.get_transaction_history(account_id, token, 100)
-            
-            # Process transactions into spending categories
-            total_outgoing = 0
-            total_incoming = 0
-            transaction_count = 0
-            
-            for transaction in transactions:
-                transaction_count += 1
-                amount = transaction.get("amount", 0)
-                
-                # Check if this is an outgoing transaction (from this account)
-                if transaction.get("fromAccountNum") == account_id:
-                    total_outgoing += amount
-                else:
-                    total_incoming += amount
-            
-            return {
-                "account_id": account_id,
-                "analysis_period_days": days,
-                "total_outgoing_cents": total_outgoing,
-                "total_incoming_cents": total_incoming,
-                "total_outgoing_dollars": total_outgoing / 100.0,
-                "total_incoming_dollars": total_incoming / 100.0,
-                "net_flow_cents": total_incoming - total_outgoing,
-                "net_flow_dollars": (total_incoming - total_outgoing) / 100.0,
-                "transaction_count": transaction_count,
-                "average_transaction_amount": (total_outgoing + total_incoming) / (2 * transaction_count) if transaction_count > 0 else 0
-            }
-            
-        except Exception as e:
-            logger.error(f"Error analyzing spending for {account_id}: {str(e)}")
-            return {
-                "account_id": account_id,
-                "analysis_period_days": days,
-                "total_outgoing_cents": 0,
-                "total_incoming_cents": 0,
-                "transaction_count": 0,
-                "error": str(e)
-            }
-    
-    async def close(self):
-        """Close the HTTP client"""
-        if self.client:
-            await self.client.aclose()
-            logger.info("Bank of Anthos client closed")
+        # Define realistic transaction categories with amounts
+        transaction_templates = [
+            {"category": "grocery", "amount_range": (30, 150), "description": "Grocery shopping"},
+            {"category": "gas", "amount_range": (40, 80), "description": "Gas station"},
+            {"category": "restaurant", "amount_range": (15, 120), "description": "Restaurant dining"},
+            {"category": "utilities", "amount_range": (80, 250), "description": "Utility payment"},
+            {"category": "rent", "amount_range

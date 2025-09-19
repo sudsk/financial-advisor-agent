@@ -7,15 +7,16 @@ import { Target, DollarSign, TrendingUp, Shield, Activity } from 'lucide-react';
 const Container = styled(motion.div)`
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
-  padding: 25px;
+  padding: 20px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+  max-height: 200px;
 `;
 
 const Title = styled.h3`
   color: #2c3e50;
-  margin-bottom: 20px;
-  font-size: 1.4em;
+  margin-bottom: 15px;
+  font-size: 1.2em;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -24,8 +25,8 @@ const Title = styled.h3`
 
 const AgentsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
 `;
 
 const AgentCard = styled(motion.div)`
@@ -34,10 +35,10 @@ const AgentCard = styled(motion.div)`
     if (props.$status === 'active') return 'linear-gradient(135deg, #d4edda, #c3e6cb)';
     return 'linear-gradient(135deg, #f8f9fa, #e9ecef)';
   }};
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 15px;
   text-align: center;
-  border: 3px solid ${props => {
+  border: 2px solid ${props => {
     if (props.$status === 'processing') return '#ffc107';
     if (props.$status === 'active') return '#28a745';
     return '#e1e8ed';
@@ -47,14 +48,14 @@ const AgentCard = styled(motion.div)`
   overflow: hidden;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
   }
 `;
 
 const AgentIcon = styled.div`
-  font-size: 2.5em;
-  margin-bottom: 10px;
+  font-size: 2em;
+  margin-bottom: 8px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -68,12 +69,12 @@ const AgentIcon = styled.div`
 const AgentName = styled.div`
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 5px;
-  font-size: 1.1em;
+  margin-bottom: 4px;
+  font-size: 1em;
 `;
 
 const AgentStatusText = styled.div`
-  font-size: 0.9em;
+  font-size: 0.8em;
   color: ${props => {
     if (props.$status === 'processing') return '#856404';
     if (props.$status === 'active') return '#155724';
@@ -84,10 +85,10 @@ const AgentStatusText = styled.div`
 
 const StatusIndicator = styled(motion.div)`
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: ${props => props.$status === 'processing' ? '14px' : '12px'};
-  height: ${props => props.$status === 'processing' ? '14px' : '12px'};
+  top: 6px;
+  right: 6px;
+  width: ${props => props.$status === 'processing' ? '12px' : '10px'};
+  height: ${props => props.$status === 'processing' ? '12px' : '10px'};
   border-radius: 50%;
   background: ${props => {
     if (props.$status === 'processing') return '#fd7e14';
@@ -96,33 +97,33 @@ const StatusIndicator = styled(motion.div)`
   }};
   box-shadow: ${props => 
     props.$status === 'processing' 
-      ? '0 0 12px rgba(253, 126, 20, 0.8)' 
-      : '0 0 6px rgba(0, 0, 0, 0.3)'
+      ? '0 0 8px rgba(253, 126, 20, 0.8)' 
+      : '0 0 4px rgba(0, 0, 0, 0.3)'
   };
 `;
 
 const ProcessingBadge = styled(motion.div)`
   position: absolute;
-  top: -5px;
+  top: -4px;
   left: 50%;
   transform: translateX(-50%);
   background: #fd7e14;
   color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.75em;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.65em;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(253, 126, 20, 0.4);
+  box-shadow: 0 2px 6px rgba(253, 126, 20, 0.4);
 `;
 
 const PerformanceMetrics = styled.div`
-  margin-top: 15px;
-  padding: 10px;
+  margin-top: 10px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  font-size: 0.8em;
+  border-radius: 6px;
+  font-size: 0.7em;
 `;
 
 const MetricRow = styled.div`
@@ -261,7 +262,7 @@ function AgentStatusDashboard({ agentStatuses }) {
                     repeatType: 'reverse'
                   }}
                 >
-                  <IconComponent size={40} />
+                  <IconComponent size={32} />
                 </motion.div>
               </AgentIcon>
               
@@ -296,17 +297,7 @@ function AgentStatusDashboard({ agentStatuses }) {
         })}
       </AgentsGrid>
       
-      <TechInfo
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <strong>🔗 Architecture:</strong> ADK coordination • MCP integration • A2A protocol • Vertex AI Gemini
-        <br />
-        <small style={{ opacity: 0.8 }}>
-          💡 Watch agents light up as they process your financial query in real-time
-        </small>
-      </TechInfo>
+      {/* REMOVED: Tech info section */}
     </Container>
   );
 }

@@ -83,30 +83,30 @@ const AgentCard = styled(motion.div)`
   cursor: pointer;
 
   /* Enhanced processing state styling */
-  {/*${props => props.$status === 'processing' && `
-    animation: ${activePulse} 1.5s infinite;
-    border-animation: ${glowBorder} 2s infinite;
-    z-index: 10;
+  //${props => props.$status === 'processing' && `
+  //  animation: ${activePulse} 1.5s infinite;
+  //  border-animation: ${glowBorder} 2s infinite;
+  //  z-index: 10;
     
     /* Add shimmer effect overlay for processing */
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.6),
-        transparent
-      );
-      background-size: 200px 100%;
-      animation: ${shimmer} 2s infinite;
-      pointer-events: none;
-    }
-  `}*/}
+  //  &::before {
+  //    content: '';
+  //    position: absolute;
+  //    top: 0;
+  //    left: 0;
+  //    right: 0;
+  //    bottom: 0;
+  //    background: linear-gradient(
+  //      90deg,
+  //      transparent,
+  //      rgba(255, 255, 255, 0.6),
+  //      transparent
+  //    );
+  //    background-size: 200px 100%;
+  //    animation: ${shimmer} 2s infinite;
+  //    pointer-events: none;
+  //  }
+  //`}
 
   /* Regular hover effects for non-processing states */
   ${props => props.$status !== 'processing' && `

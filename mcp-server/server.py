@@ -51,6 +51,49 @@ async def health_check():
         "version": "2.0.0-real-data"
     }
 
+@app.post("/auth/login")
+async def auth_login(request: Dict[str, Any]):
+    """Direct authentication endpoint for UI login"""
+    try:
+        username = request.get("username")
+        password = request.get("password")
+        
+        if not username or not password:
+            return {
+                "success": False,
+                "message": "Username and password are required",
+                "error": "Missing credentials"
+            }
+        
+        logger.info(f"🔐 UI Login attempt for user: {username}")
+        
+        # Use existing Bank of Anthos authentication
+        result = await bank_client.authenticate_user(username, password)
+        
+        if result.get("success"):
+            logger.info(f"✅ UI Login successful for user: {username}")
+            return {
+                "success": True,
+                "token": result["token"],
+                "message": "Login successful",
+                "user": username
+            }
+        else:
+            logger.warning(f"❌ UI Login failed for user: {username}")
+            return {
+                "success": False,
+                "message": result.get("message", "Login failed"),
+                "error": result.get("error", "Authentication failed")
+            }
+        
+    except Exception as e:
+        logger.error(f"❌ UI Login error: {str(e)}")
+        return {
+            "success": False,
+            "message": "Login service unavailable",
+            "error": str(e)
+        }
+        
 @app.post("/tools/authenticate")
 async def authenticate_user(request: Dict[str, Any]):
     """Authenticate user and get JWT token - Real API only"""

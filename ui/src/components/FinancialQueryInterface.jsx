@@ -1,4 +1,4 @@
-// ui/src/components/FinancialQueryInterface.jsx
+// ui/src/components/FinancialQueryInterface.jsx - Enhanced with better quick scenarios
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -146,6 +146,85 @@ const ErrorMessage = styled(motion.div)`
   font-weight: 500;
 `;
 
+const QuickScenariosSection = styled.div`
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px solid #e1e8ed;
+`;
+
+const QuickScenariosTitle = styled(Label)`
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1rem;
+`;
+
+const ScenariosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+`;
+
+const ScenarioButton = styled(motion.button)`
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  &:hover:not(:disabled)::before {
+    left: 100%;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+`;
+
+const HelpText = styled.div`
+  margin-top: 15px;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+  font-size: 0.85rem;
+  color: #495057;
+  line-height: 1.4;
+`;
+
 function FinancialQueryInterface({ onAnalyze, isLoading, onReset }) {
   const [formData, setFormData] = useState({
     userId: 'testuser',
@@ -154,6 +233,14 @@ function FinancialQueryInterface({ onAnalyze, isLoading, onReset }) {
   });
   
   const [error, setError] = useState('');
+
+  // Quick scenario templates
+  const scenarios = {
+    house: "Help me save $80,000 for a house down payment in 3 years. I currently spend about $4,500 per month.",
+    retirement: "I'm 35 years old and want to retire comfortably at 60. What's my best investment strategy?",
+    debt: "I have $15,000 in credit card debt at 18% interest. How should I pay this off while still saving?",
+    investment: "I have $25,000 to invest and want to balance growth with safety. What do you recommend?"
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -193,18 +280,14 @@ function FinancialQueryInterface({ onAnalyze, isLoading, onReset }) {
     onReset();
   };
 
-  const loadDemoScenario = (scenario) => {
-    const scenarios = {
-      house: "Help me save $80,000 for a house down payment in 3 years. I currently spend about $4,500 per month.",
-      retirement: "I'm 35 years old and want to retire comfortably at 60. What's my best investment strategy?",
-      debt: "I have $15,000 in credit card debt at 18% interest. How should I pay this off while still saving?",
-      investment: "I have $25,000 to invest and want to balance growth with safety. What do you recommend?"
-    };
-    
-    setFormData(prev => ({
-      ...prev,
-      query: scenarios[scenario]
-    }));
+  const loadScenario = (scenarioKey) => {
+    if (scenarios[scenarioKey]) {
+      setFormData(prev => ({
+        ...prev,
+        query: scenarios[scenarioKey]
+      }));
+      setError(''); // Clear any existing errors
+    }
   };
 
   return (
@@ -300,39 +383,67 @@ function FinancialQueryInterface({ onAnalyze, isLoading, onReset }) {
         </ButtonContainer>
       </form>
 
-      {/* Quick scenario buttons */}
-      <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e1e8ed' }}>
-        <Label>Quick Scenarios:</Label>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-          {[
-            { key: 'house', label: '🏠 House' },
-            { key: 'retirement', label: '🏖️ Retirement' },
-            { key: 'debt', label: '💳 Debt' },
-            { key: 'investment', label: '💼 Investment' }
-          ].map(({ key, label }) => (
-            <motion.button
-              key={key}
-              type="button"
-              onClick={() => loadDemoScenario(key)}
-              disabled={isLoading}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{
-                background: 'linear-gradient(135deg, #17a2b8, #138496)',
-                color: 'white',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              {label}
-            </motion.button>
-          ))}
-        </div>
-      </div>
+      {/* Quick Scenarios Section - Enhanced */}
+      <QuickScenariosSection>
+        <QuickScenariosTitle>Quick Scenarios:</QuickScenariosTitle>
+        <ScenariosGrid>
+          <ScenarioButton
+            type="button"
+            onClick={() => loadScenario('house')}
+            disabled={isLoading}
+            whileHover={{ scale: isLoading ? 1 : 1.05 }}
+            whileTap={{ scale: isLoading ? 1 : 0.95 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            🏠 House
+          </ScenarioButton>
+          
+          <ScenarioButton
+            type="button"
+            onClick={() => loadScenario('retirement')}
+            disabled={isLoading}
+            whileHover={{ scale: isLoading ? 1 : 1.05 }}
+            whileTap={{ scale: isLoading ? 1 : 0.95 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            🏖️ Retirement
+          </ScenarioButton>
+          
+          <ScenarioButton
+            type="button"
+            onClick={() => loadScenario('debt')}
+            disabled={isLoading}
+            whileHover={{ scale: isLoading ? 1 : 1.05 }}
+            whileTap={{ scale: isLoading ? 1 : 0.95 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            💳 Debt
+          </ScenarioButton>
+          
+          <ScenarioButton
+            type="button"
+            onClick={() => loadScenario('investment')}
+            disabled={isLoading}
+            whileHover={{ scale: isLoading ? 1 : 1.05 }}
+            whileTap={{ scale: isLoading ? 1 : 0.95 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            💼 Investment
+          </ScenarioButton>
+        </ScenariosGrid>
+        
+        <HelpText>
+          💡 <strong>Tip:</strong> Click any scenario above to load a sample question, then customize it with your specific situation and amounts.
+        </HelpText>
+      </QuickScenariosSection>
     </Container>
   );
 }

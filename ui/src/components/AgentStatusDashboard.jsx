@@ -296,22 +296,11 @@ function AgentStatusDashboard({ agentStatuses }) {
                   </motion.span>
                 )}
               </AgentStatusText>
-              
-              {/* Bottom section with confidence */}
-              {status.confidence > 0 && (
-                <PerformanceMetrics>
-                  <MetricRow>
-                    <span>Confidence:</span>
-                    <span>{Math.round(status.confidence * 100)}%</span>
-                  </MetricRow>
-                </PerformanceMetrics>
-              )}
             </AgentCard>
           );
         })}
       </AgentsGrid>
       
-      {/* REMOVED: Tech info section */}
     </Container>
   );
 }

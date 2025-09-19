@@ -1,5 +1,5 @@
-// ui/src/hooks/useFinancialAdvisor.js
-import { useState, useCallback, useRef } from 'react';
+// ui/src/hooks/useFinancialAdvisor.js - Updated with decoupled visual simulation
+import { useState, useCallback, useRef, useEffect } from 'react';
 import axios from 'axios';
 
 // Configure axios defaults
@@ -12,112 +12,6 @@ const api = axios.create({
     'Content-Type': 'application/json',
   }
 });
-const updateAgentStatus = useCallback((agentId, status, statusText, confidence = 0) => {
-  console.log(`🔥 UPDATING AGENT: ${agentId} to ${status}`); // ADD THIS
-  setAgentStatuses(prev => ({
-    ...prev,
-    [agentId]: { status, statusText, confidence }
-  }));
-}, []);
-
-useEffect(() => {
-  console.log(`🎯 AGENT STATUSES CHANGED:`, agentStatuses); // ADD THIS
-}, [agentStatuses]);
-
-// Mock data for demo purposes when API is unavailable
-const mockResponses = {
-  house: {
-    summary: "Based on your house-saving goal, our AI agents recommend a balanced approach combining aggressive savings, strategic investments, and risk management to reach your down payment target.",
-    detailed_plan: [
-      "Reduce discretionary spending by 20% ($900/month) to increase savings rate",
-      "Invest 60% in low-cost index funds, 30% in bonds, 10% in high-yield savings",
-      "Set up automatic transfers to separate house fund account",
-      "Consider increasing income through side projects or career advancement",
-      "Target timeline: 36 months with $2,222/month savings required"
-    ],
-    key_insights: [
-      "Budget Agent: You can save an additional $900/month through category optimization",
-      "Investment Agent: Moderate-risk portfolio can achieve 6-7% annual returns",
-      "Security Agent: Current spending patterns show manageable financial risk",
-      "Coordinator: Goal is achievable with disciplined execution"
-    ],
-    next_actions: [
-      "Schedule monthly budget review meetings",
-      "Set up automatic investment transfers",
-      "Research and compare investment platforms",
-      "Track progress with financial dashboard"
-    ],
-    adk_metadata: {
-      coordinator_id: "coordinator-001",
-      agents_coordinated: ["budget-001", "investment-001", "security-001"],
-      processing_time_ms: 4250,
-      registry_status: 3
-    }
-  },
-  retirement: {
-    summary: "For retirement planning at age 35, our agents recommend a long-term wealth building strategy focused on tax-advantaged accounts and diversified growth investments.",
-    detailed_plan: [
-      "Maximize 401(k) contributions to employer match",
-      "Open and fund Roth IRA with $6,000 annual contribution",
-      "Invest in growth-focused portfolio: 80% stocks, 20% bonds",
-      "Increase savings rate by 2% annually",
-      "Plan for 25x annual expenses by age 60"
-    ],
-    key_insights: [
-      "Budget Agent: Current spending allows for 15-20% savings rate",
-      "Investment Agent: 25-year timeline allows for aggressive growth strategy",
-      "Security Agent: Diversification reduces long-term risk",
-      "Coordinator: On track for comfortable retirement with current plan"
-    ],
-    next_actions: [
-      "Open retirement accounts if not already done",
-      "Set up automatic contributions",
-      "Review and rebalance annually",
-      "Track progress toward retirement goals"
-    ]
-  },
-  debt: {
-    summary: "For debt optimization, our agents recommend the avalanche method combined with strategic budgeting to eliminate high-interest debt while maintaining emergency savings.",
-    detailed_plan: [
-      "Pay minimum on all debts, extra on highest interest debt first",
-      "Reduce non-essential spending by 25% ($1,125/month)",
-      "Apply $800/month extra to credit card debt",
-      "Maintain $1,000 emergency fund during debt payoff",
-      "Timeline: 18-24 months to eliminate debt"
-    ],
-    key_insights: [
-      "Budget Agent: Identified $1,125 in potential monthly savings",
-      "Investment Agent: Focus on debt elimination before investing",
-      "Security Agent: High-interest debt is primary financial risk",
-      "Coordinator: Debt-free status achievable within 2 years"
-    ]
-  },
-  investment: {
-    summary: "For your investment strategy, our agents recommend a balanced approach emphasizing diversification, low costs, and risk-appropriate allocation for your timeline and goals.",
-    detailed_plan: [
-      "Allocate across asset classes: 70% stocks, 25% bonds, 5% cash",
-      "Use low-cost index funds and ETFs",
-      "Dollar-cost average over 6-12 months",
-      "Rebalance quarterly to maintain target allocation",
-      "Consider tax-loss harvesting opportunities"
-    ],
-    key_insights: [
-      "Budget Agent: Investment fits within available cash flow",
-      "Investment Agent: Moderate allocation balances growth and safety",
-      "Security Agent: Diversification reduces concentration risk",
-      "Coordinator: Strategy aligns with risk tolerance and timeline"
-    ]
-  }
-};
-
-const getScenarioType = (query) => {
-  const queryLower = query.toLowerCase();
-  if (queryLower.includes('house') || queryLower.includes('home')) return 'house';
-  if (queryLower.includes('retire') || queryLower.includes('retirement')) return 'retirement';
-  if (queryLower.includes('debt') || queryLower.includes('credit card')) return 'debt';
-  if (queryLower.includes('invest') || queryLower.includes('portfolio')) return 'investment';
-  return 'house'; // default
-};
 
 export function useFinancialAdvisor() {
   const [isLoading, setIsLoading] = useState(false);
@@ -132,7 +26,13 @@ export function useFinancialAdvisor() {
 
   const statusTimeoutRef = useRef([]);
 
+  // 🔍 DEBUG: Monitor agent status changes
+  useEffect(() => {
+    console.log(`🎯 AGENT STATUSES CHANGED:`, agentStatuses);
+  }, [agentStatuses]);
+
   const updateAgentStatus = useCallback((agentId, status, statusText, confidence = 0) => {
+    console.log(`🔥 UPDATING AGENT: ${agentId} to ${status}`); // DEBUG
     setAgentStatuses(prev => ({
       ...prev,
       [agentId]: { status, statusText, confidence }
@@ -140,6 +40,7 @@ export function useFinancialAdvisor() {
   }, []);
 
   const resetAgentStatuses = useCallback(() => {
+    console.log('🔄 RESETTING AGENT STATUSES'); // DEBUG
     setAgentStatuses({
       coordinator: { status: 'ready', statusText: 'Ready', confidence: 0 },
       budget: { status: 'ready', statusText: 'Ready', confidence: 0 },
@@ -152,64 +53,106 @@ export function useFinancialAdvisor() {
     statusTimeoutRef.current = [];
   }, []);
 
-  const simulateAgentCoordination = useCallback((query) => {
-    return new Promise((resolve) => {
-      // Reset statuses
-      resetAgentStatuses();
+  const startVisualSimulation = useCallback(() => {
+    console.log('🎬 STARTING VISUAL SIMULATION'); // DEBUG
+    
+    // Reset statuses first
+    resetAgentStatuses();
+    
+    // Create realistic agent coordination timing for demo
+    const timeouts = [
+      setTimeout(() => {
+        console.log('🎬 Coordinator processing'); // DEBUG
+        updateAgentStatus('coordinator', 'processing', 'Analyzing query...', 0.1);
+      }, 500),
       
-      // Simulate realistic agent coordination timing
-      const timeouts = [
-        setTimeout(() => updateAgentStatus('coordinator', 'processing', 'Analyzing query...', 0.1), 500),
-        setTimeout(() => updateAgentStatus('budget', 'processing', 'Analyzing spending...', 0.3), 1500),
-        setTimeout(() => updateAgentStatus('investment', 'processing', 'Evaluating options...', 0.5), 2500),
-        setTimeout(() => updateAgentStatus('security', 'processing', 'Risk assessment...', 0.7), 3500),
-        setTimeout(() => {
-          updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92);
-          updateAgentStatus('budget', 'active', 'Recommendations ready', 0.88);
-          updateAgentStatus('investment', 'active', 'Strategy prepared', 0.91);
-          updateAgentStatus('security', 'active', 'Risk evaluated', 0.95);
-          
-          const scenarioType = getScenarioType(query);
-          const response = mockResponses[scenarioType];
-          resolve(response);
-        }, 5000)
-      ];
+      setTimeout(() => {
+        console.log('🎬 Budget agent processing'); // DEBUG
+        updateAgentStatus('budget', 'processing', 'Analyzing spending...', 0.3);
+      }, 1500),
       
-      statusTimeoutRef.current = timeouts;
-    });
+      setTimeout(() => {
+        console.log('🎬 Investment agent processing'); // DEBUG
+        updateAgentStatus('investment', 'processing', 'Evaluating options...', 0.5);
+      }, 2500),
+      
+      setTimeout(() => {
+        console.log('🎬 Security agent processing'); // DEBUG
+        updateAgentStatus('security', 'processing', 'Risk assessment...', 0.7);
+      }, 3500),
+      
+      // Final completion states (set when real API completes)
+      setTimeout(() => {
+        console.log('🎬 All agents completing'); // DEBUG
+        updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92);
+        updateAgentStatus('budget', 'active', 'Recommendations ready', 0.88);
+        updateAgentStatus('investment', 'active', 'Strategy prepared', 0.91);
+        updateAgentStatus('security', 'active', 'Risk evaluated', 0.95);
+      }, 5000)
+    ];
+    
+    statusTimeoutRef.current = timeouts;
   }, [updateAgentStatus, resetAgentStatuses]);
 
   const analyzeQuery = useCallback(async (queryData) => {
+    console.log('🚀 STARTING ANALYSIS:', queryData); // DEBUG
+    
     setIsLoading(true);
     setError(null);
     setResults(null);
     
+    // 🎭 ALWAYS start visual simulation for demo purposes
+    startVisualSimulation();
+    
     try {
-      // Try real API first
-      let response;
-      try {
-        console.log('Attempting to call ADK Coordinator API...');
-        const apiResponse = await api.post('/analyze', queryData);
-        response = apiResponse.data.result || apiResponse.data;
-        console.log('API call successful:', response);
-      } catch (apiError) {
-        console.log('API call failed, falling back to simulation:', apiError.message);
-        // Fallback to simulation
-        response = await simulateAgentCoordination(queryData.query);
-      }
+      console.log('📡 Calling real API...'); // DEBUG
       
+      // Try real API call to coordinator
+      const apiResponse = await api.post('/analyze', queryData);
+      const response = apiResponse.data.result || apiResponse.data;
+      
+      console.log('✅ Real API successful:', response); // DEBUG
       setResults(response);
       
     } catch (err) {
-      console.error('Analysis error:', err);
-      setError(err.response?.data?.error || err.message || 'Failed to analyze query');
-      resetAgentStatuses();
+      console.error('❌ API Error:', err.message); // DEBUG
+      
+      // On API failure, create a basic fallback response
+      const fallbackResponse = {
+        summary: `Analysis request received for: ${queryData.query}. Unable to connect to AI agents at this time.`,
+        detailed_plan: [
+          "API connection to coordinator agent failed",
+          "Please check that all services are running",
+          "Try again in a few moments"
+        ],
+        key_insights: [
+          "System is in demo mode",
+          "Visual agent coordination is simulated",
+          "Backend services may be starting up"
+        ],
+        next_actions: [
+          "Verify GKE deployment status",
+          "Check coordinator agent logs",
+          "Ensure MCP server connectivity"
+        ],
+        monitoring: "Check kubectl get pods -n financial-advisor for service status",
+        timeline: "Services should be available within 2-3 minutes",
+        coordination_metadata: {
+          error: true,
+          message: "Demo mode - visual simulation only",
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      setResults(fallbackResponse);
+      setError(`API unavailable: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [simulateAgentCoordination, resetAgentStatuses]);
+  }, [startVisualSimulation]);
 
   const resetAnalysis = useCallback(() => {
+    console.log('🔄 RESETTING ANALYSIS'); // DEBUG
     setResults(null);
     setError(null);
     resetAgentStatuses();
@@ -222,9 +165,10 @@ export function useFinancialAdvisor() {
   const getAgentHealth = useCallback(async () => {
     try {
       const response = await api.get('/health');
+      console.log('💊 Health check successful:', response.data); // DEBUG
       return response.data;
     } catch (err) {
-      console.error('Health check failed:', err);
+      console.error('💊 Health check failed:', err); // DEBUG
       return null;
     }
   }, []);
@@ -232,9 +176,10 @@ export function useFinancialAdvisor() {
   const getDetailedStatus = useCallback(async () => {
     try {
       const response = await api.get('/status');
+      console.log('📊 Status check successful:', response.data); // DEBUG
       return response.data;
     } catch (err) {
-      console.error('Status check failed:', err);
+      console.error('📊 Status check failed:', err); // DEBUG
       return null;
     }
   }, []);

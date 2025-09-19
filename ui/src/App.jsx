@@ -1,11 +1,11 @@
-// ui/src/App.jsx - Updated without Demo Scenarios widget
+// ui/src/App.jsx - Updated with authentication flow
 import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoginScreen from './components/LoginScreen';
 import FinancialQueryInterface from './components/FinancialQueryInterface';
 import AgentStatusDashboard from './components/AgentStatusDashboard';
 import ResultsDisplay from './components/ResultsDisplay';
-// Removed DemoScenarios import
 import { useFinancialAdvisor } from './hooks/useFinancialAdvisor';
 
 // Global styles
@@ -44,6 +44,41 @@ const Header = styled(motion.header)`
   margin-bottom: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+  position: relative;
+`;
+
+const LogoutButton = styled(motion.button)`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  }
+`;
+
+const WelcomeMessage = styled.div`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #4caf50;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  @media (max-width: 768px) {
+    position: static;
+    margin-bottom: 10px;
+  }
 `;
 
 const Title = styled.h1`
@@ -108,6 +143,14 @@ const LoadingText = styled.p`
 `;
 
 function App() {
+  const [authState, setAuthState] = useState({
+    authenticated: false,
+    token: null,
+    username: null
+  });
+
+  const [showResults, setShowResults] = useState(false);
+
   const {
     isLoading,
     results,
@@ -116,17 +159,50 @@ function App() {
     resetAnalysis
   } = useFinancialAdvisor();
 
-  const [showResults, setShowResults] = useState(false);
-
   useEffect(() => {
     if (results && !isLoading) {
       setShowResults(true);
     }
   }, [results, isLoading]);
 
+  const handleLogin = (loginData) => {
+    setAuthState({
+      authenticated: true,
+      token: loginData.token,
+      username: loginData.username
+    });
+
+    // Store token in localStorage for session persistence
+    localStorage.setItem('authToken', loginData.token);
+    localStorage.setItem('username', loginData.username);
+  };
+
+  const handleLogout = () => {
+    setAuthState({
+      authenticated: false,
+      token: null,
+      username: null
+    });
+
+    // Clear stored authentication
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('username');
+    
+    // Reset any existing analysis
+    resetAnalysis();
+    setShowResults(false);
+  };
+
   const handleAnalyze = async (queryData) => {
     setShowResults(false);
-    await analyzeQuery(queryData);
+    
+    // Add authentication token to the request
+    const enrichedQueryData = {
+      ...queryData,
+      authToken: authState.token
+    };
+    
+    await analyzeQuery(enrichedQueryData);
   };
 
   const handleReset = () => {
@@ -134,6 +210,31 @@ function App() {
     resetAnalysis();
   };
 
+  // Check for existing authentication on app load
+  useEffect(() => {
+    const storedToken = localStorage.getItem('authToken');
+    const storedUsername = localStorage.getItem('username');
+    
+    if (storedToken && storedUsername) {
+      setAuthState({
+        authenticated: true,
+        token: storedToken,
+        username: storedUsername
+      });
+    }
+  }, []);
+
+  // Show login screen if not authenticated
+  if (!authState.authenticated) {
+    return (
+      <>
+        <GlobalStyle />
+        <LoginScreen onLogin={handleLogin} />
+      </>
+    );
+  }
+
+  // Show main application if authenticated
   return (
     <>
       <GlobalStyle />
@@ -143,6 +244,18 @@ function App() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
+          <WelcomeMessage>
+            👋 Welcome back, {authState.username}!
+          </WelcomeMessage>
+          
+          <LogoutButton
+            onClick={handleLogout}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Sign Out
+          </LogoutButton>
+
           <Title>🤖 AI Financial Advisor</Title>
           <Subtitle>Multi-Agent Financial Intelligence on Google Kubernetes Engine</Subtitle>
           <Subtitle className="tech-stack">
@@ -160,6 +273,7 @@ function App() {
               onAnalyze={handleAnalyze}
               isLoading={isLoading}
               onReset={handleReset}
+              authToken={authState.token}
             />
           </motion.div>
 
@@ -203,8 +317,6 @@ function App() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Demo Scenarios widget removed - scenarios now only in FinancialQueryInterface */}
       </AppContainer>
     </>
   );

@@ -7,10 +7,10 @@ import { Target, DollarSign, TrendingUp, Shield, Activity } from 'lucide-react';
 const Container = styled(motion.div)`
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
-  padding: 20px;
+  padding: 18px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
-  max-height: 200px;
+  min-height: 160px;
 `;
 
 const Title = styled.h3`
@@ -25,8 +25,8 @@ const Title = styled.h3`
 
 const AgentsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
 `;
 
 const AgentCard = styled(motion.div)`
@@ -35,8 +35,8 @@ const AgentCard = styled(motion.div)`
     if (props.$status === 'active') return 'linear-gradient(135deg, #d4edda, #c3e6cb)';
     return 'linear-gradient(135deg, #f8f9fa, #e9ecef)';
   }};
-  border-radius: 10px;
-  padding: 15px;
+  border-radius: 8px;
+  padding: 12px;
   text-align: center;
   border: 2px solid ${props => {
     if (props.$status === 'processing') return '#ffc107';
@@ -46,16 +46,17 @@ const AgentCard = styled(motion.div)`
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  height: 100px;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   }
 `;
 
 const AgentIcon = styled.div`
-  font-size: 2em;
-  margin-bottom: 8px;
+  font-size: 1.6em;
+  margin-bottom: 6px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -69,12 +70,12 @@ const AgentIcon = styled.div`
 const AgentName = styled.div`
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 4px;
-  font-size: 1em;
+  margin-bottom: 3px;
+  font-size: 0.9em;
 `;
 
 const AgentStatusText = styled.div`
-  font-size: 0.8em;
+  font-size: 0.75em;
   color: ${props => {
     if (props.$status === 'processing') return '#856404';
     if (props.$status === 'active') return '#155724';
@@ -104,18 +105,18 @@ const StatusIndicator = styled(motion.div)`
 
 const ProcessingBadge = styled(motion.div)`
   position: absolute;
-  top: -4px;
+  top: -3px;
   left: 50%;
   transform: translateX(-50%);
   background: #fd7e14;
   color: white;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.65em;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 0.6em;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(253, 126, 20, 0.4);
+  box-shadow: 0 1px 4px rgba(253, 126, 20, 0.4);
 `;
 
 const PerformanceMetrics = styled.div`
@@ -262,7 +263,7 @@ function AgentStatusDashboard({ agentStatuses }) {
                     repeatType: 'reverse'
                   }}
                 >
-                  <IconComponent size={32} />
+                  <IconComponent size={26} />
                 </motion.div>
               </AgentIcon>
               
@@ -285,10 +286,6 @@ function AgentStatusDashboard({ agentStatuses }) {
                   <MetricRow>
                     <span>Confidence:</span>
                     <span>{Math.round(status.confidence * 100)}%</span>
-                  </MetricRow>
-                  <MetricRow>
-                    <span>Capabilities:</span>
-                    <span>{agent.capabilities.length}</span>
                   </MetricRow>
                 </PerformanceMetrics>
               )}

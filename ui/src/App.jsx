@@ -40,7 +40,7 @@ const Header = styled(motion.header)`
   text-align: center;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
-  padding: 25px;
+  padding: 25px 25px 20px 25px;
   margin-bottom: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
@@ -110,12 +110,13 @@ const AgentStatusSection = styled.div`
   margin-bottom: 25px;
 `;
 
-// NEW: Main Content Area (query + results side by side)
+// NEW: Main Content Area (query + results side by side with 30/70 split)
 const MainContentGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 30% 70%;
   gap: 30px;
   margin-bottom: 30px;
+  align-items: start;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;

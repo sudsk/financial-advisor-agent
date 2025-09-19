@@ -1,11 +1,11 @@
-// ui/src/App.jsx
+// ui/src/App.jsx - Updated without Demo Scenarios widget
 import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import FinancialQueryInterface from './components/FinancialQueryInterface';
 import AgentStatusDashboard from './components/AgentStatusDashboard';
 import ResultsDisplay from './components/ResultsDisplay';
-import DemoScenarios from './components/DemoScenarios';
+// Removed DemoScenarios import
 import { useFinancialAdvisor } from './hooks/useFinancialAdvisor';
 
 // Global styles
@@ -204,13 +204,7 @@ function App() {
           )}
         </AnimatePresence>
 
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <DemoScenarios />
-        </motion.div>
+        {/* Demo Scenarios widget removed - scenarios now only in FinancialQueryInterface */}
       </AppContainer>
     </>
   );

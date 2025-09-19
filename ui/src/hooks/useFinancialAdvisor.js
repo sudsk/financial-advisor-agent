@@ -64,22 +64,22 @@ export function useFinancialAdvisor() {
       setTimeout(() => {
         console.log('🎬 Coordinator starts processing'); // DEBUG
         updateAgentStatus('coordinator', 'processing', 'Analyzing query...', 0.1);
-      }, 2000),
+      }, 5000),
       
       setTimeout(() => {
         console.log('🎬 Budget agent processing'); // DEBUG
         updateAgentStatus('budget', 'processing', 'Analyzing spending...', 0.3);
-      }, 3000),
+      }, 10000),
       
       setTimeout(() => {
         console.log('🎬 Investment agent processing'); // DEBUG
         updateAgentStatus('investment', 'processing', 'Evaluating options...', 0.5);
-      }, 4000),
+      }, 15000),
       
       setTimeout(() => {
         console.log('🎬 Security agent processing'); // DEBUG
         updateAgentStatus('security', 'processing', 'Risk assessment...', 0.7);
-      }, 5000),
+      }, 20000),
       
       // Agents complete, coordinator starts synthesis
       setTimeout(() => {
@@ -88,13 +88,13 @@ export function useFinancialAdvisor() {
         updateAgentStatus('investment', 'active', 'Strategy ready', 0.91);
         updateAgentStatus('security', 'active', 'Risk evaluated', 0.95);
         updateAgentStatus('coordinator', 'processing', 'Synthesizing results...', 0.8);
-      }, 6000),
+      }, 25000),
       
       // Coordinator completes synthesis (set when real API completes)
       setTimeout(() => {
         console.log('🎬 Coordinator synthesis complete'); // DEBUG
         updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92);
-      }, 12000)
+      }, 30000)
     ];
     
     statusTimeoutRef.current = timeouts;

@@ -1,4 +1,4 @@
-// ui/src/components/AgentStatusDashboard.jsx
+// ui/src/components/AgentStatusDashboard.jsx - Enhanced with processing highlights
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
@@ -28,38 +28,53 @@ const AgentsGrid = styled.div`
   gap: 15px;
 `;
 
-const pulse = keyframes`
-  0%, 100% { 
-    transform: scale(1); 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+// Enhanced pulse animation for active processing
+const activePulse = keyframes`
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(255, 193, 7, 0.7);
   }
   50% { 
-    transform: scale(1.05); 
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 8px rgba(255, 193, 7, 0.3);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(255, 193, 7, 0.7);
   }
 `;
 
+// Glowing border animation for processing
+const glowBorder = keyframes`
+  0% { border-color: #ffc107; }
+  25% { border-color: #fd7e14; }
+  50% { border-color: #ffc107; }
+  75% { border-color: #fd7e14; }
+  100% { border-color: #ffc107; }
+`;
+
+// Shimmer effect for processing cards
 const shimmer = keyframes`
   0% {
-    left: -100%;
+    background-position: -200px 0;
   }
   100% {
-    left: 100%;
+    background-position: calc(200px + 100%) 0;
   }
 `;
 
 const AgentCard = styled(motion.div)`
   background: ${props => {
-    if (props.$status === 'active') return 'linear-gradient(135deg, #d4edda, #c3e6cb)';
     if (props.$status === 'processing') return 'linear-gradient(135deg, #fff3cd, #ffeaa7)';
+    if (props.$status === 'active') return 'linear-gradient(135deg, #d4edda, #c3e6cb)';
     return '#f8f9fa';
   }};
   border-radius: 12px;
   padding: 20px;
   text-align: center;
   border: 3px solid ${props => {
-    if (props.$status === 'active') return '#28a745';
     if (props.$status === 'processing') return '#ffc107';
+    if (props.$status === 'active') return '#28a745';
     return '#e1e8ed';
   }};
   transition: all 0.3s ease;
@@ -67,29 +82,39 @@ const AgentCard = styled(motion.div)`
   overflow: hidden;
   cursor: pointer;
 
+  /* Enhanced processing state styling */
   ${props => props.$status === 'processing' && `
-    animation: ${pulse} 1.5s infinite;
+    animation: ${activePulse} 1.5s infinite;
+    border-animation: ${glowBorder} 2s infinite;
+    z-index: 10;
+    
+    /* Add shimmer effect overlay for processing */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.6),
+        transparent
+      );
+      background-size: 200px 100%;
+      animation: ${shimmer} 2s infinite;
+      pointer-events: none;
+    }
   `}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s;
-  }
-
-  &:hover::before {
-    animation: ${shimmer} 0.5s ease-out;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  }
+  /* Regular hover effects for non-processing states */
+  ${props => props.$status !== 'processing' && `
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+  `}
 `;
 
 const AgentIcon = styled.div`
@@ -98,11 +123,18 @@ const AgentIcon = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 2;
   color: ${props => {
+    if (props.$status === 'processing') return '#fd7e14';
     if (props.$status === 'active') return '#28a745';
-    if (props.$status === 'processing') return '#ffc107';
     return '#6c757d';
   }};
+
+  /* Add subtle glow for processing icons */
+  ${props => props.$status === 'processing' && `
+    filter: drop-shadow(0 0 8px rgba(253, 126, 20, 0.6));
+  `}
 `;
 
 const AgentName = styled.div`
@@ -110,27 +142,43 @@ const AgentName = styled.div`
   color: #2c3e50;
   margin-bottom: 5px;
   font-size: 1.1em;
+  position: relative;
+  z-index: 2;
 `;
 
 const AgentStatusText = styled.div`
   font-size: 0.9em;
   color: #666;
   font-weight: 500;
+  position: relative;
+  z-index: 2;
+  
+  /* Make processing status text more prominent */
+  ${props => props.$status === 'processing' && `
+    color: #856404;
+    font-weight: 600;
+    text-shadow: 0 0 4px rgba(133, 100, 4, 0.3);
+  `}
 `;
 
 const StatusIndicator = styled(motion.div)`
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 12px;
-  height: 12px;
+  width: ${props => props.$status === 'processing' ? '14px' : '12px'};
+  height: ${props => props.$status === 'processing' ? '14px' : '12px'};
   border-radius: 50%;
   background: ${props => {
+    if (props.$status === 'processing') return '#fd7e14';
     if (props.$status === 'active') return '#28a745';
-    if (props.$status === 'processing') return '#ffc107';
     return '#6c757d';
   }};
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  box-shadow: ${props => 
+    props.$status === 'processing' 
+      ? '0 0 12px rgba(253, 126, 20, 0.8)' 
+      : '0 0 8px rgba(0, 0, 0, 0.3)'
+  };
+  z-index: 3;
 `;
 
 const PerformanceMetrics = styled.div`
@@ -139,6 +187,8 @@ const PerformanceMetrics = styled.div`
   background: rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   font-size: 0.8em;
+  position: relative;
+  z-index: 2;
 `;
 
 const MetricRow = styled.div`
@@ -146,6 +196,32 @@ const MetricRow = styled.div`
   justify-content: space-between;
   margin-bottom: 4px;
   color: #555;
+`;
+
+// Processing progress bar for active agents
+const ProcessingProgressBar = styled(motion.div)`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffc107, #fd7e14, #ffc107);
+  background-size: 200% 100%;
+  border-radius: 0 0 12px 12px;
+  z-index: 1;
+`;
+
+const progressAnimation = keyframes`
+  0% {
+    width: 0%;
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    width: 100%;
+    background-position: 0% 50%;
+  }
 `;
 
 function AgentStatusDashboard({ agentStatuses }) {
@@ -207,24 +283,50 @@ function AgentStatusDashboard({ agentStatuses }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={status.status !== 'processing' ? { scale: 1.02 } : {}}
+              whileTap={status.status !== 'processing' ? { scale: 0.98 } : {}}
             >
               <StatusIndicator
                 $status={status.status}
                 animate={status.status === 'processing' ? {
-                  scale: [1, 1.2, 1],
-                  opacity: [1, 0.7, 1]
+                  scale: [1, 1.3, 1],
+                  opacity: [1, 0.6, 1]
                 } : {}}
-                transition={{ duration: 1, repeat: status.status === 'processing' ? Infinity : 0 }}
+                transition={{ 
+                  duration: status.status === 'processing' ? 1 : 0.5, 
+                  repeat: status.status === 'processing' ? Infinity : 0 
+                }}
               />
               
               <AgentIcon $status={status.status}>
-                <IconComponent size={40} />
+                <motion.div
+                  animate={status.status === 'processing' ? {
+                    rotate: [0, 10, -10, 0],
+                    scale: [1, 1.1, 1]
+                  } : {}}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: status.status === 'processing' ? Infinity : 0,
+                    repeatType: 'reverse'
+                  }}
+                >
+                  <IconComponent size={40} />
+                </motion.div>
               </AgentIcon>
               
               <AgentName>{agent.name}</AgentName>
-              <AgentStatusText>{status.statusText}</AgentStatusText>
+              <AgentStatusText $status={status.status}>
+                {status.statusText}
+                {status.status === 'processing' && (
+                  <motion.span
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    style={{ marginLeft: '4px' }}
+                  >
+                    ⚡
+                  </motion.span>
+                )}
+              </AgentStatusText>
               
               {status.confidence > 0 && (
                 <PerformanceMetrics>
@@ -240,18 +342,16 @@ function AgentStatusDashboard({ agentStatuses }) {
               )}
               
               {status.status === 'processing' && (
-                <motion.div
-                  style={{
-                    position: 'absolute',
-                    bottom: '0',
-                    left: '0',
-                    height: '3px',
-                    background: 'linear-gradient(90deg, #ffc107, #fd7e14)',
-                    borderRadius: '0 0 12px 12px'
-                  }}
+                <ProcessingProgressBar
                   initial={{ width: '0%' }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  animate={{ 
+                    width: '100%',
+                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+                  }}
+                  transition={{ 
+                    width: { duration: 2, repeat: Infinity },
+                    backgroundPosition: { duration: 1.5, repeat: Infinity }
+                  }}
                 />
               )}
             </AgentCard>
@@ -273,6 +373,10 @@ function AgentStatusDashboard({ agentStatuses }) {
         transition={{ delay: 0.5 }}
       >
         <strong>🔗 Architecture:</strong> ADK coordination • MCP integration • A2A protocol • Vertex AI Gemini
+        <br />
+        <small style={{ opacity: 0.8 }}>
+          💡 Processing agents are highlighted with enhanced visual effects
+        </small>
       </motion.div>
     </Container>
   );

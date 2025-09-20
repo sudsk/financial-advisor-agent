@@ -69,13 +69,14 @@ export function useFinancialAdvisor() {
       setTimeout(() => updateAgentStatus('security', 'processing', 'Risk assessment...', 0.7), 20000),
       
       // Agents stop individually (NEW - staggered completion)
+      setTimeout(() => updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.60), 10000), 
       setTimeout(() => updateAgentStatus('budget', 'active', 'Analysis complete', 0.88), 15000),        // Budget finishes after 2 seconds
       setTimeout(() => updateAgentStatus('investment', 'active', 'Strategy ready', 0.91), 20000),       // Investment finishes after 3 seconds  
       setTimeout(() => updateAgentStatus('security', 'active', 'Risk evaluated', 0.95), 25000),        // Security finishes after 3 seconds
       
       // Coordinator synthesis phase
       setTimeout(() => updateAgentStatus('coordinator', 'processing', 'Synthesizing results...', 0.8), 25000),
-      setTimeout(() => updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92), 45000)      
+      setTimeout(() => updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92), 36000)      
     ];
     
     statusTimeoutRef.current = timeouts;

@@ -76,7 +76,7 @@ export function useFinancialAdvisor() {
       
       // Coordinator synthesis phase
       setTimeout(() => updateAgentStatus('coordinator', 'processing', 'Synthesizing results...', 0.8), 20000),
-      setTimeout(() => updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92), 28000)      
+      setTimeout(() => updateAgentStatus('coordinator', 'active', 'Analysis complete', 0.92), 30000)      
     ];
     
     statusTimeoutRef.current = timeouts;

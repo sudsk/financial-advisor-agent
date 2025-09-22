@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/build.sh - Fixed build script for AI Financial Advisor
+# scripts/build.sh
 
 set -e
 
@@ -82,5 +82,3 @@ build_and_push "financial-advisor-ui" "Dockerfile" "ui"
 
 echo ""
 echo "🎉 All images built and pushed successfully!"
-echo ""
-echo "🚀 Ready for GKE Hackathon deployment!"

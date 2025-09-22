@@ -453,14 +453,6 @@ data:
 - **Auto-scaling**: Scales to zero during inactivity
 - **Optimized Resource Usage**: Right-sizing without over-provisioning
 
-### Estimated Costs (US Central1)
-```
-Development (8 hours/day): ~$3/day
-Demo (3 hours): ~$1
-Idle (nights/weekends): ~$0.10/hour
-Total Hackathon (10 days): ~$35
-```
-
 ## 🧪 Testing
 
 ### Unit Tests
@@ -487,32 +479,6 @@ pytest mcp-server/tests/
 # Simulate multiple concurrent users
 ./scripts/load-test.sh --users 10 --duration 300s
 ```
-
-## 📚 Documentation
-
-- [Architecture Deep Dive](docs/ARCHITECTURE.md)
-- [API Integration Guide](docs/API_INTEGRATION.md)
-- [Demo Script](docs/DEMO_SCRIPT.md)
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-
-## 🏆 Hackathon Highlights
-
-### Innovation
-- ✅ **Multi-Agent Coordination**: First-of-its-kind A2A protocol implementation
-- ✅ **Zero-Code Integration**: Seamless connection to existing banking systems
-- ✅ **Production Architecture**: Enterprise-ready design patterns
-
-### Technical Excellence
-- ✅ **Cloud-Native**: Full GKE and Google Cloud integration
-- ✅ **Security First**: Workload Identity and IAM best practices  
-- ✅ **Scalable Design**: Auto-scaling, resilient architecture
-- ✅ **Modern Protocols**: MCP, A2A, ADK implementation
-
-### Business Value
-- ✅ **Real Banking Integration**: Works with actual financial data
-- ✅ **Practical AI**: Solves real financial planning problems
-- ✅ **Production Ready**: Banks could deploy this today
-- ✅ **Cost Effective**: Optimized for real-world economics
 
 ## 🤝 Contributing
 

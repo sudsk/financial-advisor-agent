@@ -64,7 +64,6 @@ Built for the **Google Kubernetes Engine 10th Anniversary Hackathon** showcasing
 ### Prerequisites
 - Google Cloud Project with billing enabled
 - GKE cluster with Workload Identity enabled
-- Bank of Anthos deployed (see setup instructions below)
 - `gcloud` CLI configured
 - `kubectl` configured for your cluster
 
@@ -73,6 +72,11 @@ Built for the **Google Kubernetes Engine 10th Anniversary Hackathon** showcasing
 # Clone and deploy everything
 git clone https://github.com/sudsk/financial-advisor-agent.git
 cd financial-advisor-agent
+
+# Set your project ID
+export PROJECT_ID="your-gcp-project-id"
+
+# Deploy everything
 ./scripts/deploy.sh
 ```
 
@@ -89,128 +93,36 @@ cd financial-advisor-agent
 export PROJECT_ID="your-gcp-project-id"
 export CLUSTER_NAME="financial-advisor-cluster"
 export REGION="us-central1"
-export ZONE="us-central1-a"
 
 # Verify your project
 gcloud config set project $PROJECT_ID
 ```
 
-### Step 3: Create GKE Autopilot Cluster (if needed)
+### Step 3: Deploy with Script
 ```bash
-# Create cost-optimized Autopilot cluster with Workload Identity
-gcloud container clusters create-auto $CLUSTER_NAME \
-    --region=$REGION \
-    --project=$PROJECT_ID \
-    --workload-pool=$PROJECT_ID.svc.id.goog \
-    --enable-autoscaling \
-    --release-channel=regular
-
-# Get cluster credentials
-gcloud container clusters get-credentials $CLUSTER_NAME --region=$REGION
+# Run the complete deployment script
+./scripts/deploy.sh
 ```
 
-### Step 4: Deploy Bank of Anthos
-```bash
-# Deploy Bank of Anthos to default namespace
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/bank-of-anthos/main/extras/jwt/jwt-secret.yaml
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/bank-of-anthos/main/kubernetes-manifests.yaml
+This will:
+- Create GKE Autopilot cluster with Workload Identity
+- Deploy Bank of Anthos to default namespace
+- Set up Google Service Account with Vertex AI permissions
+- Create Artifact Registry and build/push container images
+- Deploy AI Financial Advisor system to financial-advisor namespace
+- Configure Workload Identity binding
+- Provision all services with LoadBalancer access
 
-# Wait for Bank of Anthos to be ready
-kubectl wait --for=condition=available --timeout=300s deployment --all -n default
-
-# Verify Bank of Anthos is running
-kubectl get pods
-kubectl get services
-```
-
-### Step 5: Enable Required APIs
-```bash
-# Enable required Google Cloud APIs
-gcloud services enable \
-    container.googleapis.com \
-    artifactregistry.googleapis.com \
-    aiplatform.googleapis.com \
-    compute.googleapis.com \
-    iam.googleapis.com
-```
-
-### Step 6: Set Up Workload Identity
-```bash
-# Create Google Service Account for Vertex AI access
-gcloud iam service-accounts create financial-advisor-gsa \
-    --description="Service account for AI Financial Advisor" \
-    --display-name="Financial Advisor GSA"
-
-# Grant Vertex AI permissions
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:financial-advisor-gsa@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/aiplatform.user"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:financial-advisor-gsa@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/ml.developer"
-```
-
-### Step 7: Create Financial Advisor Namespace
-```bash
-# Create our namespace
-kubectl apply -f k8s/namespace.yaml
-
-# Verify namespace creation
-kubectl get namespaces | grep financial-advisor
-```
-
-### Step 8: Configure Workload Identity Binding
-```bash
-# Create Kubernetes Service Account
-kubectl create serviceaccount financial-advisor-ksa -n financial-advisor
-
-# Bind Kubernetes SA to Google SA
-gcloud iam service-accounts add-iam-policy-binding \
-    financial-advisor-gsa@$PROJECT_ID.iam.gserviceaccount.com \
-    --role roles/iam.workloadIdentityUser \
-    --member "serviceAccount:$PROJECT_ID.svc.id.goog[financial-advisor/financial-advisor-ksa]"
-
-# Annotate Kubernetes Service Account
-kubectl annotate serviceaccount financial-advisor-ksa \
-    -n financial-advisor \
-    iam.gke.io/gcp-service-account=financial-advisor-gsa@$PROJECT_ID.iam.gserviceaccount.com
-```
-
-### Step 9: Set Up Artifact Registry
-```bash
-# Create Artifact Registry repository
-gcloud artifacts repositories create financial-advisor \
-    --repository-format=docker \
-    --location=$REGION \
-    --description="AI Financial Advisor container images"
-
-# Configure Docker authentication
-gcloud auth configure-docker $REGION-docker.pkg.dev
-```
-
-### Step 10: Build and Deploy
-```bash
-# Build all container images
-./scripts/build.sh
-
-# Deploy AI Financial Advisor system
-kubectl apply -f k8s/
-
-# Wait for deployment to complete
-kubectl wait --for=condition=available --timeout=600s deployment --all -n financial-advisor
-```
-
-### Step 11: Verify Deployment
+### Step 4: Verify Deployment
 ```bash
 # Check all pods are running
 kubectl get pods -n financial-advisor
 
-# Check services
-kubectl get services -n financial-advisor
+# Get external IP
+kubectl get service financial-advisor-ui -n financial-advisor
 
-# Check Workload Identity setup
-kubectl describe pod -l app=coordinator-agent -n financial-advisor | grep "serviceaccount\|gcp-service-account"
+# Check services health
+kubectl get pods -n default | grep -E "(userservice|balancereader|transactionhistory|contacts)"
 ```
 
 ## 🎬 Demo
@@ -218,13 +130,12 @@ kubectl describe pod -l app=coordinator-agent -n financial-advisor | grep "servi
 ### Access the Application
 ```bash
 # Get external IP for the UI
-kubectl get service financial-advisor-ui -n financial-advisor
+EXTERNAL_IP=$(kubectl get service financial-advisor-ui -n financial-advisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "Financial Advisor UI: http://$EXTERNAL_IP"
 
-# Access the application
-echo "Financial Advisor UI: http://$(kubectl get service financial-advisor-ui -n financial-advisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-
-# Access Bank of Anthos (for comparison)
-echo "Bank of Anthos UI: http://$(kubectl get service frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+# Bank of Anthos URL for comparison
+BANK_IP=$(kubectl get service frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "Bank of Anthos UI: http://$BANK_IP"
 ```
 
 ### Demo Scenarios
@@ -250,7 +161,7 @@ echo "Bank of Anthos UI: http://$(kubectl get service frontend -o jsonpath='{.st
 
 ### Demo Login Credentials
 - **Username**: `testuser`
-- **Password**: `password`
+- **Password**: `bankofanthos`
 
 ## 🛠️ Development
 
@@ -260,8 +171,9 @@ echo "Bank of Anthos UI: http://$(kubectl get service frontend -o jsonpath='{.st
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies for each agent
+cd agents/coordinator && pip install -r requirements.txt && cd ../..
+cd agents/budget-agent && pip install -r requirements.txt && cd ../..
 
 # Set up Application Default Credentials for local development
 gcloud auth application-default login
@@ -270,12 +182,9 @@ gcloud auth application-default login
 ### Local Testing
 ```bash
 # Test Bank of Anthos integration
-./scripts/test-integration.sh
+curl -X GET http://userservice.default.svc.cluster.local:8080/ready
 
-# Test individual agents
-./scripts/test-agents.sh
-
-# Run MCP server locally
+# Test MCP server locally
 cd mcp-server
 python server.py
 ```
@@ -287,9 +196,6 @@ docker build -t mcp-server ./mcp-server
 
 # Build all services
 ./scripts/build.sh
-
-# Push to Artifact Registry
-./scripts/push.sh
 ```
 
 ## 🏗️ Project Structure
@@ -299,47 +205,35 @@ financial-advisor-agent/
 ├── agents/
 │   ├── coordinator/              # ADK-powered orchestration agent
 │   │   ├── Dockerfile
-│   │   ├── main.py
-│   │   ├── agent_logic.py
+│   │   ├── agent.py             # ADK agent with Vertex AI integration
+│   │   ├── server.py            # FastAPI server following ADK pattern
 │   │   └── requirements.txt
 │   ├── budget-agent/             # Spending analysis agent
-│   │   ├── Dockerfile
-│   │   ├── main.py
-│   │   └── requirements.txt
 │   ├── investment-agent/         # Portfolio recommendations agent
-│   │   ├── Dockerfile
-│   │   ├── main.py
-│   │   └── requirements.txt
 │   └── security-agent/           # Risk assessment agent
-│       ├── Dockerfile
-│       ├── main.py
-│       └── requirements.txt
 ├── mcp-server/                   # Bank of Anthos integration
 │   ├── Dockerfile
-│   ├── server.py
-│   ├── bank_anthos_client.py
+│   ├── server.py                # MCP protocol server
+│   ├── bank_anthos_client.py    # Bank API client
 │   └── requirements.txt
 ├── ui/                           # React frontend dashboard
 │   ├── Dockerfile
 │   ├── package.json
-│   ├── src/
-│   └── public/
+│   ├── nginx.conf               # Nginx proxy configuration
+│   └── src/
 ├── k8s/                          # Kubernetes manifests
 │   ├── namespace.yaml
 │   ├── mcp-server-deployment.yaml
 │   ├── coordinator-deployment.yaml
 │   ├── agents-deployment.yaml
 │   ├── services.yaml
-│   └── ingress.yaml
+│   └── ui-deployment.yaml
 ├── scripts/                      # Deployment and utility scripts
 │   ├── deploy.sh
-│   ├── build.sh
-│   ├── test-integration.sh
-│   └── cleanup.sh
+│   └── build.sh
 ├── docs/                         # Additional documentation
-│   ├── ARCHITECTURE.md
 │   ├── API_INTEGRATION.md
-│   └── DEMO_SCRIPT.md
+│   └── frontend_ui.html
 └── README.md
 ```
 
@@ -350,9 +244,9 @@ Our MCP server integrates with these Bank of Anthos endpoints:
 
 | Service | Endpoint | Purpose | Data Format |
 |---------|----------|---------|-------------|
-| **UserService** | `POST /login` | User authentication | `{"username": "testuser", "password": "password"}` |
+| **UserService** | `GET /login` | User authentication | Query params: username, password |
 | **UserService** | `GET /users/{user_id}` | User profile data | User demographics, account info |
-| **BalanceReader** | `GET /balances/{account_id}` | Current account balance | Real-time balance information |
+| **BalanceReader** | `GET /balances/{account_id}` | Current account balance | Real-time balance in cents |
 | **TransactionHistory** | `GET /transactions/{account_id}` | Transaction history | Spending patterns, transaction details |
 | **Contacts** | `GET /contacts/{user_id}` | User contacts | Payment contacts and relationships |
 
@@ -372,13 +266,13 @@ Coordinator Agent ↔ Budget Agent
 
 #### ADK (Agent Development Kit)
 - Agent lifecycle management
-- State coordination
+- State coordination  
 - Error handling and recovery
 - Performance monitoring
 
 ### Vertex AI Integration
 - **Authentication**: Workload Identity (no API keys)
-- **Model**: Gemini Pro via Vertex AI
+- **Model**: Gemini 2.5 Flash via Vertex AI
 - **Usage**: Financial analysis, recommendation generation, risk assessment
 
 ## ⚙️ Configuration
@@ -392,30 +286,12 @@ CLUSTER_NAME=financial-advisor-cluster
 
 # Bank of Anthos Integration
 BANK_ANTHOS_NAMESPACE=default
-USERSERVICE_URL=http://userservice.default.svc.cluster.local:8080
-BALANCEREADER_URL=http://balancereader.default.svc.cluster.local:8080
-TRANSACTIONHISTORY_URL=http://transactionhistory.default.svc.cluster.local:8080
-CONTACTS_URL=http://contacts.default.svc.cluster.local:8080
+MCP_SERVER_URL=http://mcp-server.financial-advisor.svc.cluster.local:8080
 
 # Vertex AI Configuration
-VERTEX_AI_PROJECT=$PROJECT_ID
-VERTEX_AI_LOCATION=us-central1
-MODEL_NAME=gemini-pro
-```
-
-### Kubernetes ConfigMaps
-```yaml
-# Example: Agent configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: agent-config
-  namespace: financial-advisor
-data:
-  coordinator_replicas: "2"
-  agent_timeout: "30"
-  vertex_ai_model: "gemini-pro"
-  bank_api_timeout: "10"
+GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_GENAI_USE_VERTEXAI=True
 ```
 
 ## 🔐 Security
@@ -455,29 +331,22 @@ data:
 
 ## 🧪 Testing
 
-### Unit Tests
-```bash
-# Run unit tests for all components
-pytest agents/tests/
-pytest mcp-server/tests/
-```
-
 ### Integration Tests
 ```bash
 # Test Bank of Anthos integration
-./scripts/test-integration.sh
+kubectl exec -n financial-advisor deployment/mcp-server -- curl -f http://localhost:8080/health
 
 # Test agent coordination
-./scripts/test-agents.sh
+kubectl logs -f deployment/coordinator-agent -n financial-advisor
 
 # End-to-end demo test
-./scripts/test-demo.sh
+curl -X POST http://$EXTERNAL_IP/api/analyze -H "Content-Type: application/json" -d '{"user_id":"testuser","account_id":"1234567890","query":"test"}'
 ```
 
 ### Load Testing
 ```bash
-# Simulate multiple concurrent users
-./scripts/load-test.sh --users 10 --duration 300s
+# Scale up for load testing
+kubectl scale deployment coordinator-agent --replicas=3 -n financial-advisor
 ```
 
 ## 🤝 Contributing
@@ -490,10 +359,31 @@ pytest mcp-server/tests/
 5. Open a Pull Request
 
 ### Code Standards
-- Follow PEP 8 for Python code
+- Follow ADK patterns for Python agent code
 - Use TypeScript for frontend development
 - Include unit tests for new features
 - Update documentation for API changes
+
+## 🧹 Cleanup
+
+To remove all resources:
+
+```bash
+# Delete the financial advisor namespace
+kubectl delete namespace financial-advisor
+
+# Delete Bank of Anthos (optional)
+kubectl delete -f https://raw.githubusercontent.com/GoogleCloudPlatform/bank-of-anthos/main/kubernetes-manifests.yaml
+
+# Delete the GKE cluster
+gcloud container clusters delete $CLUSTER_NAME --region=$REGION
+
+# Delete Artifact Registry
+gcloud artifacts repositories delete financial-advisor --location=$REGION
+
+# Delete Google Service Account
+gcloud iam service-accounts delete financial-advisor-gsa@$PROJECT_ID.iam.gserviceaccount.com
+```
 
 ## 📄 License
 
@@ -511,4 +401,3 @@ MIT License - See [LICENSE](LICENSE) file for details.
 **Built with ❤️ for the Google Kubernetes Engine 10th Anniversary Hackathon**
 
 🚀 **Ready to revolutionize financial services with AI?** Deploy now and see the future of banking! 🤖💰
-
